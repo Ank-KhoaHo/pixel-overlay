@@ -11,7 +11,8 @@ The repository exists, the licence in [LICENSE](LICENSE) has been chosen, and th
 
 ## M1 — First usable version
 
-Free Chrome extension that overlays a design image on a live page to check it pixel by pixel., working end to end for the simplest case that matters.
+Any number of design layers over a live page: see-through level, position, nudge, scale, lock,
+per-site memory, a difference view, and layers that return after a reload on sites you keep.
 
 ## M2 — Hardening
 
@@ -24,5 +25,6 @@ Ready for someone outside the project to pick up, use, and report a problem agai
 
 ## Things deliberately not coming
 
-Nothing yet — there is nothing to rule out until there is enough of the project to rule things
-out against.
+- **A layer limit.** Every layer is free, and stays free.
+- **An account or a server.** Images and settings stay in the browser.
+- **Access to every site at install.** Site access is asked for one site at a time.

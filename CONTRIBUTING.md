@@ -8,10 +8,22 @@ just the mechanics of building and testing it.
 
 ## Building and testing
 
-This template ships with no build system, so there is nothing to run yet. Once a language and a
-build system are chosen, the real build and test commands belong in this section — it is the
-first place a contributor looks, so keep it current rather than letting it drift from whatever
-actually runs in CI.
+You need Node 24 and Python 3.12 (for the docs guard).
+
+```
+npm ci
+npx playwright install chromium
+bash scripts/check.sh
+```
+
+`scripts/check.sh` is the whole gate, the same steps CI runs: TypeScript, the store build (which
+must carry no `host_permissions`), a separate end-to-end build, unit tests (Vitest), browser
+tests in a real Chromium with the unpacked extension (Playwright), and the docs guard. **Any
+skipped test fails the gate**: a skip is an assertion that did not run.
+
+The end-to-end build (`npm run build:e2e`, output `.output/chrome-mv3-e2e`) adds `localhost`
+access so the tests can skip Chrome's permission prompt. Never load or ship that build as the
+real extension.
 
 ## Branching and pull requests
 

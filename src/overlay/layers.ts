@@ -49,6 +49,7 @@ export function mountLayers(opts: {
   }
 
   const imageElements = new Map<string, HTMLImageElement>();
+  const renderedImageIds = new Map<string, string>();
   let currentState: SiteState | null = null;
   let activeDraggingId: string | null = null;
 
@@ -230,6 +231,7 @@ export function mountLayers(opts: {
           if (!currentLayerIds.has(id)) {
             img.remove();
             imageElements.delete(id);
+            renderedImageIds.delete(id);
           }
         }
 
@@ -249,8 +251,9 @@ export function mountLayers(opts: {
           }
 
           const dataUrl = images.get(layer.imageId);
-          if (dataUrl && img.src !== dataUrl) {
+          if (dataUrl && renderedImageIds.get(layer.id) !== layer.imageId) {
             img.src = dataUrl;
+            renderedImageIds.set(layer.id, layer.imageId);
           }
 
           const isActiveUnlocked = s.activeLayerId === layer.id && !layer.locked;
@@ -269,6 +272,7 @@ export function mountLayers(opts: {
         win.removeEventListener('keydown', handleKeyDown, true);
         host.remove();
         imageElements.clear();
+        renderedImageIds.clear();
       } catch (err) {
         console.warn('[pixel-overlay]', err);
       }
