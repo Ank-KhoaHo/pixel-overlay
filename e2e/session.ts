@@ -128,6 +128,7 @@ export function oneLayerState(over: Partial<SiteState['layers'][number]> = {}, b
     activeLayerId: 'L1',
     blend,
     shown: true,
+    allHidden: false,
     panel: { x: -1, y: 16, collapsed: false },
   };
 }

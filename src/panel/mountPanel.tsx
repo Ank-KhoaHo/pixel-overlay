@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { LayerPatch, NewLayer, SiteState } from '../core/types';
+import { shadowModeFor } from '../overlay/shadowMode';
 import type { StorageAreaLike } from '../shared/storage';
 import { Panel } from './Panel';
 import panelCss from './panel.css?inline';
@@ -14,15 +15,16 @@ export interface PanelMountOptions {
   onMoveLayer: (id: string, dir: 'up' | 'down') => void;
   onDeleteLayer: (id: string) => void;
   onSetBlend: (blend: 'normal' | 'difference') => void;
-  onSetAllVisible: (visible: boolean) => void;
+  onSetAllHidden: (hidden: boolean) => void;
   onSetCollapsed: (collapsed: boolean) => void;
   onClose: () => void;
   onSavePanelPosition: (x: number, y: number) => void;
 }
 
 export interface PanelView {
-  render(s: SiteState, images: Map<string, string>): void;
+  render(s: SiteState, images: Map<string, string>, error?: string): void;
   destroy(): void;
+  blur(): void;
 }
 
 function applyHostPosition(host: HTMLElement, panel: { x: number; y: number }, win: Window) {
@@ -49,7 +51,7 @@ function applyHostPosition(host: HTMLElement, panel: { x: number; y: number }, w
 
 export function mountPanel(opts: PanelMountOptions): PanelView {
   const host = opts.doc.createElement('pixel-overlay-panel');
-  const shadow = host.attachShadow({ mode: 'open' });
+  const shadow = host.attachShadow({ mode: shadowModeFor(import.meta.env.MODE) });
 
   const styleEl = opts.doc.createElement('style');
   styleEl.textContent = panelCss;
@@ -82,8 +84,11 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
   host.addEventListener('dragover', handleDragOver);
 
   return {
-    render(s: SiteState, images: Map<string, string>) {
+    render(s: SiteState, images: Map<string, string>, error?: string) {
       try {
+        if (!host.isConnected) {
+          opts.doc.documentElement?.appendChild(host);
+        }
         latestState = s;
         latestImages = images;
         applyHostPosition(host, s.panel, win);
@@ -94,13 +99,14 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
             images={latestImages}
             hostEl={host}
             area={opts.area}
+            error={error}
             onAddLayer={opts.onAddLayer}
             onSelectLayer={opts.onSelectLayer}
             onUpdateLayer={opts.onUpdateLayer}
             onMoveLayer={opts.onMoveLayer}
             onDeleteLayer={opts.onDeleteLayer}
             onSetBlend={opts.onSetBlend}
-            onSetAllVisible={opts.onSetAllVisible}
+            onSetAllHidden={opts.onSetAllHidden}
             onSetCollapsed={opts.onSetCollapsed}
             onClose={opts.onClose}
             onSavePanelPosition={opts.onSavePanelPosition}
@@ -117,6 +123,17 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
         host.removeEventListener('dragover', handleDragOver);
         root.unmount();
         host.remove();
+      } catch (err) {
+        console.warn('[pixel-overlay]', err);
+      }
+    },
+
+    blur() {
+      try {
+        const active = shadow.activeElement as HTMLElement | null;
+        if (active && typeof active.blur === 'function') {
+          active.blur();
+        }
       } catch (err) {
         console.warn('[pixel-overlay]', err);
       }

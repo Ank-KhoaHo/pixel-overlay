@@ -16,6 +16,7 @@ export function emptySiteState(): SiteState {
     activeLayerId: null,
     blend: 'normal',
     shown: true,
+    allHidden: false,
     panel: { ...PANEL_DEFAULT },
   };
 }
@@ -85,6 +86,14 @@ export function parseSiteState(raw: unknown): SiteState | null {
 
   const validLayers = s.layers as Layer[];
 
+  let allHidden = false;
+  if ('allHidden' in s && s.allHidden !== undefined) {
+    if (typeof s.allHidden !== 'boolean') {
+      return null;
+    }
+    allHidden = s.allHidden;
+  }
+
   if (s.activeLayerId !== null) {
     if (
       typeof s.activeLayerId !== 'string' ||
@@ -112,6 +121,7 @@ export function parseSiteState(raw: unknown): SiteState | null {
     activeLayerId: s.activeLayerId,
     blend: s.blend,
     shown: s.shown,
+    allHidden,
     panel: {
       x: p.x,
       y: p.y,
@@ -279,11 +289,11 @@ export function updateLayer(s: SiteState, id: string, patch: LayerPatch): SiteSt
 }
 
 export function nudge(s: SiteState, dx: number, dy: number): SiteState {
-  if (s.activeLayerId === null) {
+  if (s.allHidden || s.activeLayerId === null) {
     return s;
   }
   const activeLayer = s.layers.find((l) => l.id === s.activeLayerId);
-  if (!activeLayer || activeLayer.locked) {
+  if (!activeLayer || activeLayer.locked || !activeLayer.visible) {
     return s;
   }
   if (!Number.isFinite(dx) || !Number.isFinite(dy) || (dx === 0 && dy === 0)) {
@@ -383,5 +393,15 @@ export function setAllVisible(s: SiteState, visible: boolean): SiteState {
   return {
     ...s,
     layers: s.layers.map((l) => (l.visible === visible ? l : { ...l, visible })),
+  };
+}
+
+export function setAllHidden(s: SiteState, hidden: boolean): SiteState {
+  if (s.allHidden === hidden) {
+    return s;
+  }
+  return {
+    ...s,
+    allHidden: hidden,
   };
 }

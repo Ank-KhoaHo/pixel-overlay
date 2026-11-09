@@ -1,16 +1,13 @@
 import { browser } from 'wxt/browser';
-import { originOf } from '../../core/site';
+import { grantOriginFrom, requestGrant } from './grant';
 
 function init() {
   const app = document.getElementById('app');
   if (!app) return;
 
-  const params = new URLSearchParams(window.location.search);
-  const rawOrigin = params.get('origin');
-  const origin = rawOrigin ? originOf(rawOrigin) : null;
-  const isValid = origin !== null && rawOrigin === origin;
+  const origin = grantOriginFrom(window.location.search);
 
-  if (!isValid) {
+  if (!origin) {
     const p = document.createElement('p');
     p.textContent = 'Nothing to do.';
     app.appendChild(p);
@@ -32,20 +29,14 @@ function init() {
   button.addEventListener('click', async () => {
     button.disabled = true;
     status.textContent = '';
-    try {
-      const granted = await browser.permissions.request({
-        origins: [`${origin}/*`],
-      });
-      if (granted) {
-        await browser.runtime.sendMessage({ type: 'po/granted', origin });
-        window.close();
-      } else {
-        button.disabled = false;
-        status.textContent = 'Not allowed. You can try again.';
-      }
-    } catch (err) {
+    const result = await requestGrant(origin, {
+      request: (p) => browser.permissions.request(p),
+      send: (m) => browser.runtime.sendMessage(m),
+    });
+    if (result === 'granted') {
+      window.close();
+    } else {
       button.disabled = false;
-      console.warn('[pixel-overlay]', err);
       status.textContent = 'Not allowed. You can try again.';
     }
   });

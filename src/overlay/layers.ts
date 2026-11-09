@@ -1,5 +1,6 @@
 import type { Layer, SiteState } from '../core/types';
 import { keyToNudge } from '../core/keys';
+import { shadowModeFor } from './shadowMode';
 
 export interface LayersView {
   render(s: SiteState, images: Map<string, string>): void;
@@ -8,11 +9,12 @@ export interface LayersView {
 
 export function mountLayers(opts: {
   doc: Document;
+  onDragStart?: () => void;
   onMove(id: string, x: number, y: number): void;
   onNudge(dx: number, dy: number): void;
 }): LayersView {
   const host = opts.doc.createElement('pixel-overlay-layers');
-  const shadow = host.attachShadow({ mode: 'open' });
+  const shadow = host.attachShadow({ mode: shadowModeFor(import.meta.env.MODE) });
 
   const styleEl = opts.doc.createElement('style');
   styleEl.textContent = `
@@ -93,11 +95,15 @@ export function mountLayers(opts: {
     img.addEventListener('pointerdown', (e: PointerEvent) => {
       try {
         if (e.button !== 0) return;
-        if (!currentState || !currentState.shown) return;
+        if (!currentState || !currentState.shown || currentState.allHidden) return;
         const isActUnlocked =
           currentState.activeLayerId === layerId &&
           currentState.layers.some((l) => l.id === layerId && !l.locked && l.visible);
         if (!isActUnlocked) return;
+
+        // The panel blurs its own focused field (B1 item 1). Never reach into another
+        // host's shadowRoot: it is null in the Store build, where roots are closed.
+        opts.onDragStart?.();
 
         e.preventDefault();
         try {
@@ -185,6 +191,12 @@ export function mountLayers(opts: {
           inEditable = true;
         } else if ((el as HTMLElement).isContentEditable) {
           inEditable = true;
+        } else if (
+          tag.includes('-') &&
+          tag !== 'pixel-overlay-layers' &&
+          tag !== 'pixel-overlay-panel'
+        ) {
+          inEditable = true;
         }
       }
 
@@ -197,7 +209,7 @@ export function mountLayers(opts: {
         inEditable,
       });
 
-      if (nudge !== null && currentState && currentState.shown) {
+      if (nudge !== null && currentState && currentState.shown && !currentState.allHidden) {
         const activeLayer = currentState.layers.find(
           (l) => l.id === currentState?.activeLayerId,
         );
@@ -213,18 +225,62 @@ export function mountLayers(opts: {
 
   win.addEventListener('keydown', handleKeyDown, true);
 
+  let listeningBody: HTMLElement | null = null;
+
+  const handleBodyScroll = () => {
+    try {
+      const body = opts.doc.body;
+      const docEl = opts.doc.documentElement;
+      if (!body || !docEl) return;
+      const bodyStyle = win.getComputedStyle(body);
+      const htmlStyle = win.getComputedStyle(docEl);
+      const bodyOverflowY = bodyStyle.overflowY;
+      const htmlOverflowY = htmlStyle.overflowY;
+      const isBodyScrollable =
+        (bodyOverflowY === 'auto' || bodyOverflowY === 'scroll') &&
+        (htmlOverflowY === 'hidden' || htmlOverflowY === 'clip');
+
+      if (isBodyScrollable) {
+        host.style.setProperty(
+          'transform',
+          `translate(${-body.scrollLeft}px, ${-body.scrollTop}px)`,
+        );
+      } else {
+        host.style.removeProperty('transform');
+      }
+    } catch (err) {
+      console.warn('[pixel-overlay]', err);
+    }
+  };
+
+  const updateScroller = () => {
+    try {
+      const body = opts.doc.body;
+      if (body && listeningBody !== body) {
+        if (listeningBody) {
+          listeningBody.removeEventListener('scroll', handleBodyScroll);
+        }
+        body.addEventListener('scroll', handleBodyScroll, { passive: true });
+        listeningBody = body;
+      }
+      handleBodyScroll();
+    } catch (err) {
+      console.warn('[pixel-overlay]', err);
+    }
+  };
+
+  win.addEventListener('resize', updateScroller);
+  updateScroller();
+
   return {
     render(s: SiteState, images: Map<string, string>) {
       try {
+        if (!host.isConnected) {
+          opts.doc.documentElement?.appendChild(host);
+        }
+        updateScroller();
         currentState = s;
         applyHostStyles(host, s.blend);
-
-        if (!s.shown) {
-          for (const img of imageElements.values()) {
-            img.remove();
-          }
-          return;
-        }
 
         const currentLayerIds = new Set(s.layers.map((l) => l.id));
         for (const [id, img] of imageElements.entries()) {
@@ -233,6 +289,13 @@ export function mountLayers(opts: {
             imageElements.delete(id);
             renderedImageIds.delete(id);
           }
+        }
+
+        if (!s.shown || s.allHidden) {
+          for (const img of imageElements.values()) {
+            img.remove();
+          }
+          return;
         }
 
         for (const layer of s.layers) {
@@ -270,6 +333,11 @@ export function mountLayers(opts: {
     destroy() {
       try {
         win.removeEventListener('keydown', handleKeyDown, true);
+        win.removeEventListener('resize', updateScroller);
+        if (listeningBody) {
+          listeningBody.removeEventListener('scroll', handleBodyScroll);
+          listeningBody = null;
+        }
         host.remove();
         imageElements.clear();
         renderedImageIds.clear();

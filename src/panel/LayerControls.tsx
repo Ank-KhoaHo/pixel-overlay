@@ -35,16 +35,20 @@ function NumberInput({
   },
 }: NumberInputProps) {
   const [draft, setDraft] = useState(() => format(value));
-  const isEditingRef = useRef(false);
+  const isDirtyRef = useRef(false);
 
   useEffect(() => {
-    if (!isEditingRef.current) {
+    if (!isDirtyRef.current) {
       setDraft(format(value));
     }
   }, [value, format]);
 
   const commit = () => {
-    isEditingRef.current = false;
+    if (!isDirtyRef.current) {
+      setDraft(format(value));
+      return;
+    }
+    isDirtyRef.current = false;
     const parsed = parse(draft);
     if (parsed !== null) {
       let finalVal = parsed;
@@ -68,10 +72,10 @@ function NumberInput({
       step={step}
       value={draft}
       onFocus={() => {
-        isEditingRef.current = true;
+        isDirtyRef.current = false;
       }}
       onChange={(e) => {
-        isEditingRef.current = true;
+        isDirtyRef.current = true;
         setDraft(e.target.value);
       }}
       onKeyDown={(e) => {

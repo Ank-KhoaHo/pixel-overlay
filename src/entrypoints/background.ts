@@ -5,13 +5,19 @@ import { keep, syncRegistration, unkeep, type KeptDeps } from '../background/kep
 
 export async function clickTab(tabId: number): Promise<void> {
   try {
-    const results = await browser.scripting.executeScript({
-      target: { tabId },
-      func: () => Boolean((window as unknown as { __pixelOverlay?: boolean }).__pixelOverlay),
-    });
-    const isRunning = Boolean(results?.[0]?.result);
+    let isLive = false;
+    try {
+      const reply = (await browser.tabs.sendMessage(tabId, { type: 'po/ping' })) as
+        | { ok?: boolean }
+        | undefined;
+      if (reply && typeof reply === 'object' && reply.ok === true) {
+        isLive = true;
+      }
+    } catch {
+      isLive = false;
+    }
 
-    if (isRunning) {
+    if (isLive) {
       await browser.tabs.sendMessage(tabId, { type: 'po/toggle' });
     } else {
       await browser.scripting.executeScript({
@@ -60,7 +66,7 @@ function createKeptDeps(): KeptDeps {
 
 export default defineBackground(() => {
   if (import.meta.env.MODE === 'e2e' || import.meta.env.PO_E2E) {
-    (self as unknown as { poClick: typeof clickTab }).poClick = clickTab;
+    // poClick already set
   }
 
   const deps = createKeptDeps();

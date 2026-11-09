@@ -52,6 +52,7 @@ and switching it off gives the permission back.
 - Layers are kept per site (scheme, host and port), not per page: `/login` and `/home` on the
   same site share one list. Hide the layers you are not using.
 - Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
+- On the rare page that sets a CSS `transform` on `<html>`, the panel scrolls with the page.
 - Only Chrome (and Chromium browsers) for now.
 
 ## Where things live

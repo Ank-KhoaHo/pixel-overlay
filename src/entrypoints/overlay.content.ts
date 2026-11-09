@@ -6,7 +6,7 @@ import {
   nudge,
   removeLayer,
   selectLayer,
-  setAllVisible,
+  setAllHidden,
   setBlend,
   setPanel,
   setShown,
@@ -21,11 +21,44 @@ export default defineContentScript({
   matches: [],
   registration: 'runtime',
   main() {
-    const win = window as unknown as { __pixelOverlay?: boolean };
+    const win = window as unknown as {
+      __pixelOverlay?: boolean;
+      __pixelOverlayAlive?: () => boolean;
+    };
+
+    const isAlive = () => {
+      try {
+        return Boolean(browser.runtime?.id !== undefined);
+      } catch {
+        return false;
+      }
+    };
+
     if (win.__pixelOverlay) {
-      return;
+      let alive = false;
+      try {
+        alive = typeof win.__pixelOverlayAlive === 'function' && win.__pixelOverlayAlive() === true;
+      } catch {
+        alive = false;
+      }
+
+      if (alive) {
+        return;
+      }
+
+      try {
+        for (const el of Array.from(
+          document.querySelectorAll('pixel-overlay-layers, pixel-overlay-panel'),
+        )) {
+          el.remove();
+        }
+      } catch (err) {
+        console.warn('[pixel-overlay]', err);
+      }
     }
+
     win.__pixelOverlay = true;
+    win.__pixelOverlayAlive = isAlive;
 
     try {
       const origin = location.origin;
@@ -34,6 +67,25 @@ export default defineContentScript({
       const images = new Map<string, string>();
       let currentState: SiteState = emptySiteState();
       let panelView: PanelView | null = null;
+      let panelError = '';
+
+      const saveState = async () => {
+        try {
+          await store.save(currentState);
+          panelError = '';
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+          const msg = err instanceof Error ? err.message : String(err);
+          panelError = `Could not save: ${msg}`;
+          try {
+            currentState = await store.load();
+            await loadImagesForLayers(currentState.layers);
+          } catch (loadErr) {
+            console.warn('[pixel-overlay]', loadErr);
+          }
+          renderAll();
+        }
+      };
 
       const loadImagesForLayers = async (layers: SiteState['layers']): Promise<void> => {
         const currentImageIds = new Set(layers.map((l) => l.imageId));
@@ -68,8 +120,24 @@ export default defineContentScript({
                     currentState = addLayer(currentState, newLayer);
                     renderAll();
                     await store.save(currentState);
+                    panelError = '';
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
+                    images.delete(newLayer.imageId);
+                    try {
+                      await store.removeImage(newLayer.imageId);
+                    } catch (rmErr) {
+                      console.warn('[pixel-overlay]', rmErr);
+                    }
+                    try {
+                      currentState = await store.load();
+                      await loadImagesForLayers(currentState.layers);
+                    } catch (loadErr) {
+                      console.warn('[pixel-overlay]', loadErr);
+                    }
+                    const msg = err instanceof Error ? err.message : String(err);
+                    panelError = `Could not save: ${msg}`;
+                    renderAll();
                     throw err;
                   }
                 },
@@ -77,9 +145,7 @@ export default defineContentScript({
                   try {
                     currentState = selectLayer(currentState, id);
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
@@ -88,9 +154,7 @@ export default defineContentScript({
                   try {
                     currentState = updateLayer(currentState, id, patch);
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
@@ -99,9 +163,7 @@ export default defineContentScript({
                   try {
                     currentState = moveLayer(currentState, id, dir);
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
@@ -117,9 +179,7 @@ export default defineContentScript({
                       });
                     }
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
@@ -128,20 +188,16 @@ export default defineContentScript({
                   try {
                     currentState = setBlend(currentState, blend);
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
                 },
-                onSetAllVisible(visible) {
+                onSetAllHidden(hidden) {
                   try {
-                    currentState = setAllVisible(currentState, visible);
+                    currentState = setAllHidden(currentState, hidden);
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
@@ -150,9 +206,7 @@ export default defineContentScript({
                   try {
                     currentState = setPanel(currentState, { collapsed });
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
@@ -161,9 +215,7 @@ export default defineContentScript({
                   try {
                     currentState = setShown(currentState, false);
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
@@ -172,16 +224,14 @@ export default defineContentScript({
                   try {
                     currentState = setPanel(currentState, { x, y });
                     renderAll();
-                    void store.save(currentState).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+                    void saveState();
                   } catch (err) {
                     console.warn('[pixel-overlay]', err);
                   }
                 },
               });
             }
-            panelView.render(currentState, images);
+            panelView.render(currentState, images, panelError);
           } else {
             if (panelView) {
               panelView.destroy();
@@ -195,13 +245,14 @@ export default defineContentScript({
 
       const layersView = mountLayers({
         doc: document,
+        onDragStart() {
+          panelView?.blur();
+        },
         onMove(id, x, y) {
           try {
             currentState = updateLayer(currentState, id, { x, y });
             renderAll();
-            void store.save(currentState).catch((err) => {
-              console.warn('[pixel-overlay]', err);
-            });
+            void saveState();
           } catch (err) {
             console.warn('[pixel-overlay]', err);
           }
@@ -210,9 +261,7 @@ export default defineContentScript({
           try {
             currentState = nudge(currentState, dx, dy);
             renderAll();
-            void store.save(currentState).catch((err) => {
-              console.warn('[pixel-overlay]', err);
-            });
+            void saveState();
           } catch (err) {
             console.warn('[pixel-overlay]', err);
           }
@@ -245,29 +294,35 @@ export default defineContentScript({
         }
       });
 
-      browser.runtime.onMessage.addListener((msg: unknown) => {
-        try {
-          if (!isMessage(msg)) return;
-          void (async () => {
-            try {
-              await initialLoadPromise;
-              if (msg.type === 'po/show') {
-                currentState = setShown(currentState, true);
-                renderAll();
-                await store.save(currentState);
-              } else if (msg.type === 'po/toggle') {
-                currentState = setShown(currentState, !currentState.shown);
-                renderAll();
-                await store.save(currentState);
-              }
-            } catch (err) {
-              console.warn('[pixel-overlay]', err);
+      browser.runtime.onMessage.addListener(
+        (msg: unknown, _sender: unknown, sendResponse?: (r: unknown) => void) => {
+          try {
+            if (!isMessage(msg)) return;
+            if (msg.type === 'po/ping') {
+              sendResponse?.({ ok: true });
+              return Promise.resolve({ ok: true });
             }
-          })();
-        } catch (err) {
-          console.warn('[pixel-overlay]', err);
-        }
-      });
+            void (async () => {
+              try {
+                await initialLoadPromise;
+                if (msg.type === 'po/show') {
+                  currentState = setShown(currentState, true);
+                  renderAll();
+                  void saveState();
+                } else if (msg.type === 'po/toggle') {
+                  currentState = setShown(currentState, !currentState.shown);
+                  renderAll();
+                  void saveState();
+                }
+              } catch (err) {
+                console.warn('[pixel-overlay]', err);
+              }
+            })();
+          } catch (err) {
+            console.warn('[pixel-overlay]', err);
+          }
+        },
+      );
     } catch (err) {
       console.warn('[pixel-overlay]', err);
     }

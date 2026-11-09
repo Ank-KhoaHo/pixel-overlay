@@ -18,6 +18,7 @@ export interface SiteState {
   activeLayerId: string | null;
   blend: 'normal' | 'difference';
   shown: boolean;
+  allHidden: boolean;
   panel: { x: number; y: number; collapsed: boolean };
 }
 

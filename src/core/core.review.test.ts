@@ -57,6 +57,7 @@ describe('emptySiteState', () => {
       activeLayerId: null,
       blend: 'normal',
       shown: true,
+      allHidden: false,
       panel: { x: -1, y: 16, collapsed: false },
     });
     expect(parseSiteState(s)).toEqual(s);

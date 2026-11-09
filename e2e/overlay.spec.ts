@@ -47,6 +47,7 @@ test('two layers are drawn in array order with the top layer last in the DOM', a
     activeLayerId: 'L2',
     blend: 'normal',
     shown: true,
+    allHidden: false,
     panel: { x: -1, y: 16, collapsed: false },
   };
 
@@ -100,6 +101,7 @@ test('hiding one layer leaves only the visible layer in the DOM', async () => {
     activeLayerId: 'L1',
     blend: 'normal',
     shown: true,
+    allHidden: false,
     panel: { x: -1, y: 16, collapsed: false },
   };
 

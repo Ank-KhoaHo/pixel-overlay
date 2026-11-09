@@ -36,80 +36,7 @@ function decodeImage(dataUrl: string): Promise<{ naturalWidth: number; naturalHe
   });
 }
 
-export function AddImage({ error, onError, onClearError, onAddLayer }: AddImageProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const processFiles = async (files: File[]) => {
-    onClearError();
-    for (const file of files) {
-      const check = checkImageFile({ type: file.type, size: file.size });
-      if (!check.ok) {
-        onError(check.reason);
-        continue;
-      }
-
-      try {
-        const dataUrl = await readFileAsDataUrl(file);
-        const { naturalWidth, naturalHeight } = await decodeImage(dataUrl);
-        const imgId = newId();
-        const layerId = newId();
-        const name = layerNameFromFile(file.name);
-
-        await onAddLayer(
-          {
-            id: layerId,
-            name,
-            imageId: imgId,
-            naturalWidth,
-            naturalHeight,
-          },
-          dataUrl,
-        );
-      } catch (err) {
-        console.warn('[pixel-overlay]', err);
-        const msg = err instanceof Error ? err.message : String(err);
-        onError(`Could not save: ${msg}`);
-      }
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files;
-    if (fileList && fileList.length > 0) {
-      void processFiles(Array.from(fileList));
-    }
-    e.target.value = '';
-  };
-
-  return (
-    <div className="panel-add-section">
-      <button
-        type="button"
-        data-po="add"
-        className="panel-add-btn"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        Add image
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="image/png,image/jpeg,image/webp,image/gif"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-      {error ? (
-        <div data-po="error" className="panel-error">
-          {error}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-export { processFilesInternal as processFiles };
-async function processFilesInternal(
+export async function processFiles(
   files: File[],
   onClearError: () => void,
   onError: (err: string) => void,
@@ -146,4 +73,42 @@ async function processFilesInternal(
       onError(`Could not save: ${msg}`);
     }
   }
+}
+
+export function AddImage({ error, onError, onClearError, onAddLayer }: AddImageProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (fileList && fileList.length > 0) {
+      void processFiles(Array.from(fileList), onClearError, onError, onAddLayer);
+    }
+    e.target.value = '';
+  };
+
+  return (
+    <div className="panel-add-section">
+      <button
+        type="button"
+        data-po="add"
+        className="panel-add-btn"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        Add image
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      {error ? (
+        <div data-po="error" className="panel-error">
+          {error}
+        </div>
+      ) : null}
+    </div>
+  );
 }

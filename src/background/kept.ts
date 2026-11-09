@@ -55,9 +55,11 @@ async function doSyncRegistration(d: KeptDeps): Promise<void> {
 
   if (existing) {
     const existingMatches = existing.matches ?? [];
+    const sortedExisting = [...existingMatches].sort();
+    const sortedValid = [...validMatches].sort();
     const isSame =
-      existingMatches.length === validMatches.length &&
-      [...existingMatches].sort().every((m, idx) => m === [...validMatches].sort()[idx]);
+      sortedExisting.length === sortedValid.length &&
+      sortedExisting.every((m, idx) => m === sortedValid[idx]);
 
     if (isSame) {
       return;

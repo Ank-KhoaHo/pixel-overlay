@@ -12,13 +12,15 @@ export interface PanelProps {
   images: Map<string, string>;
   hostEl: HTMLElement;
   area?: StorageAreaLike;
+  error?: string;
+  onError?: (err: string) => void;
   onAddLayer: (newLayer: NewLayer, dataUrl: string) => Promise<void>;
   onSelectLayer: (id: string) => void;
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
   onMoveLayer: (id: string, dir: 'up' | 'down') => void;
   onDeleteLayer: (id: string) => void;
   onSetBlend: (blend: 'normal' | 'difference') => void;
-  onSetAllVisible: (visible: boolean) => void;
+  onSetAllHidden: (hidden: boolean) => void;
   onSetCollapsed: (collapsed: boolean) => void;
   onClose: () => void;
   onSavePanelPosition: (x: number, y: number) => void;
@@ -29,19 +31,21 @@ export function Panel({
   images,
   hostEl,
   area: propArea,
+  error: propError,
+  onError: propOnError,
   onAddLayer,
   onSelectLayer,
   onUpdateLayer,
   onMoveLayer,
   onDeleteLayer,
   onSetBlend,
-  onSetAllVisible,
+  onSetAllHidden,
   onSetCollapsed,
   onClose,
   onSavePanelPosition,
 }: PanelProps) {
-  const [error, setError] = useState<string>('');
-  const [checkedState, setCheckedState] = useState<boolean>(false);
+  const [error, setError] = useState<string>(propError ?? '');
+  const [isKept, setIsKept] = useState<boolean>(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const areaRef = useRef<StorageAreaLike>(propArea ?? chromeLocalArea());
   if (propArea) {
@@ -49,21 +53,25 @@ export function Panel({
   }
 
   useEffect(() => {
-    let active = true;
-    const currentArea = areaRef.current;
+    if (propError !== undefined) {
+      setError(propError);
+    }
+  }, [propError]);
 
-    const syncKept = async () => {
-      try {
-        const data = await currentArea.get(KEPT_KEY);
-        const list = data[KEPT_KEY];
-        const kept = Array.isArray(list) && list.includes(location.origin);
-        if (active) {
-          setCheckedState(kept);
-        }
-      } catch (err) {
-        console.warn('[pixel-overlay]', err);
-      }
-    };
+  const syncKept = async () => {
+    try {
+      const currentArea = areaRef.current;
+      const data = await currentArea.get(KEPT_KEY);
+      const list = data[KEPT_KEY];
+      const kept = Array.isArray(list) && list.includes(location.origin);
+      setIsKept(kept);
+    } catch (err) {
+      console.warn('[pixel-overlay]', err);
+    }
+  };
+
+  useEffect(() => {
+    const currentArea = areaRef.current;
 
     void syncKept();
 
@@ -71,9 +79,7 @@ export function Panel({
       if (Object.prototype.hasOwnProperty.call(changes, KEPT_KEY)) {
         const list = changes[KEPT_KEY]?.newValue;
         const kept = Array.isArray(list) && list.includes(location.origin);
-        if (active) {
-          setCheckedState(kept);
-        }
+        setIsKept(kept);
       }
     };
 
@@ -86,7 +92,6 @@ export function Panel({
     win.addEventListener('focus', handleFocus);
 
     return () => {
-      active = false;
       currentArea.onChanged.removeListener(listener);
       win.removeEventListener('focus', handleFocus);
     };
@@ -94,7 +99,7 @@ export function Panel({
 
   const handleKeepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextChecked = e.target.checked;
-    setCheckedState(nextChecked);
+    setIsKept(nextChecked);
     try {
       void browser.runtime.sendMessage({
         type: 'po/keep',
@@ -106,6 +111,9 @@ export function Panel({
     } catch (err) {
       console.warn('[pixel-overlay]', err);
     }
+    setTimeout(() => {
+      void syncKept();
+    }, 300);
   };
 
   const dragRef = useRef<{
@@ -183,30 +191,29 @@ export function Panel({
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent | ClipboardEvent) => {
+  const handlePaste = (e: React.ClipboardEvent) => {
     if (e.defaultPrevented) return;
     try {
       const files = e.clipboardData?.files;
       if (files && files.length > 0) {
         e.preventDefault();
-        void processFiles(Array.from(files), () => setError(''), setError, onAddLayer);
+        void processFiles(
+          Array.from(files),
+          () => {
+            setError('');
+            propOnError?.('');
+          },
+          (err) => {
+            setError(err);
+            propOnError?.(err);
+          },
+          onAddLayer,
+        );
       }
     } catch (err) {
       console.warn('[pixel-overlay]', err);
     }
   };
-
-  React.useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    const nativePaste = (e: ClipboardEvent) => {
-      handlePaste(e);
-    };
-    el.addEventListener('paste', nativePaste);
-    return () => {
-      el.removeEventListener('paste', nativePaste);
-    };
-  }, [onAddLayer]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -217,7 +224,18 @@ export function Panel({
     try {
       const files = e.dataTransfer?.files;
       if (files && files.length > 0) {
-        void processFiles(Array.from(files), () => setError(''), setError, onAddLayer);
+        void processFiles(
+          Array.from(files),
+          () => {
+            setError('');
+            propOnError?.('');
+          },
+          (err) => {
+            setError(err);
+            propOnError?.(err);
+          },
+          onAddLayer,
+        );
       }
     } catch (err) {
       console.warn('[pixel-overlay]', err);
@@ -225,7 +243,6 @@ export function Panel({
   };
 
   const hasLayers = state.layers.length > 0;
-  const allHidden = hasLayers && state.layers.every((l) => !l.visible);
   const activeLayer = state.layers.find((l) => l.id === state.activeLayerId) ?? null;
 
   const handleBlendToggle = () => {
@@ -234,7 +251,7 @@ export function Panel({
 
   const handleHideAllToggle = () => {
     if (!hasLayers) return;
-    onSetAllVisible(allHidden ? true : false);
+    onSetAllHidden(!state.allHidden);
   };
 
   return (
@@ -300,7 +317,7 @@ export function Panel({
                 type="button"
                 data-po="hide-all"
                 disabled={!hasLayers}
-                aria-pressed={allHidden ? 'true' : 'false'}
+                aria-pressed={state.allHidden ? 'true' : 'false'}
                 onClick={handleHideAllToggle}
               >
                 Hide all
@@ -310,7 +327,7 @@ export function Panel({
               <input
                 type="checkbox"
                 data-po="keep"
-                checked={checkedState}
+                checked={isKept}
                 onChange={handleKeepChange}
               />{' '}
               Keep on this site
@@ -319,8 +336,14 @@ export function Panel({
 
           <AddImage
             error={error}
-            onError={setError}
-            onClearError={() => setError('')}
+            onError={(err) => {
+              setError(err);
+              propOnError?.(err);
+            }}
+            onClearError={() => {
+              setError('');
+              propOnError?.('');
+            }}
             onAddLayer={onAddLayer}
           />
 
