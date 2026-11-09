@@ -4,6 +4,25 @@ import { grantOriginFrom, requestGrant } from './grant';
 function init() {
   const app = document.getElementById('app');
   if (!app) return;
+  app.textContent = '';
+
+  const header = document.createElement('div');
+  header.className = 'header';
+
+  const icon = document.createElement('img');
+  icon.src = '/icon/32.png';
+  icon.width = 32;
+  icon.height = 32;
+  icon.alt = '';
+  icon.className = 'header-icon';
+
+  const title = document.createElement('span');
+  title.className = 'header-title';
+  title.textContent = 'Pixel Overlay';
+
+  header.appendChild(icon);
+  header.appendChild(title);
+  app.appendChild(header);
 
   const origin = grantOriginFrom(window.location.search);
 
@@ -22,6 +41,10 @@ function init() {
   button.type = 'button';
   button.setAttribute('data-po', 'grant');
   button.textContent = 'Allow';
+
+  const note = document.createElement('p');
+  note.className = 'note';
+  note.textContent = 'Chrome will ask you to confirm.';
 
   const status = document.createElement('p');
   status.id = 'status';
@@ -42,6 +65,7 @@ function init() {
   });
 
   app.appendChild(button);
+  app.appendChild(note);
   app.appendChild(status);
 }
 

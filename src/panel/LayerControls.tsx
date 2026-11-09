@@ -45,7 +45,6 @@ function NumberInput({
 
   const commit = () => {
     if (!isDirtyRef.current) {
-      setDraft(format(value));
       return;
     }
     isDirtyRef.current = false;
@@ -81,6 +80,7 @@ function NumberInput({
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
           commit();
+          e.currentTarget.blur();
         }
       }}
       onBlur={commit}

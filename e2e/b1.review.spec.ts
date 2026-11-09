@@ -186,3 +186,13 @@ test('injecting the script twice draws one copy', async () => {
   await expect(s.page.locator('pixel-overlay-layers')).toHaveCount(1);
   await expect(s.page.locator('pixel-overlay-panel')).toHaveCount(1);
 });
+
+test('B2: Enter in a number field leaves it, so the next arrows move the layer', async () => {
+  await open();
+  await s.page.locator(P('opacity')).fill('100');
+  await s.page.locator(P('opacity')).press('Enter');
+  await s.page.keyboard.press('ArrowDown');
+  await s.page.keyboard.press('ArrowDown');
+  await expect.poll(async () => (await s.state())?.layers[0]?.y).toBe(2);
+  expect((await s.state())?.layers[0]?.opacity).toBe(1);
+});
