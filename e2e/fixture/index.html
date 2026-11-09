@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>pixel-overlay fixture</title>
+    <style>
+      /* Hostile CSS, as real sites have (plan Review Focus 2). It must not reach the overlay. */
+      img { max-width: 100%; height: auto; opacity: 0.2; width: 10px; }
+      * { box-sizing: content-box; font: 40px serif; }
+      html, body { margin: 0; padding: 0; }
+      body { position: relative; height: 3000px; background: #ffffff; }
+      .b { position: absolute; width: 200px; height: 150px; }
+      #red { left: 0; top: 0; background: #e01010; }
+      #green { left: 200px; top: 0; background: #10c020; }
+      #blue { left: 0; top: 150px; background: #1030e0; }
+      #yellow { left: 200px; top: 150px; background: #f0d010; }
+      #btn { position: absolute; left: 20px; top: 400px; width: 160px; height: 80px; }
+      #field { position: absolute; left: 20px; top: 500px; width: 200px; height: 40px; }
+    </style>
+  </head>
+  <body>
+    <div class="b" id="red"></div>
+    <div class="b" id="green"></div>
+    <div class="b" id="blue"></div>
+    <div class="b" id="yellow"></div>
+    <button id="btn" type="button" onclick="this.dataset.clicks = String(Number(this.dataset.clicks || 0) + 1)">Click</button>
+    <input id="field" type="text" />
+  </body>
+</html>

@@ -361,6 +361,7 @@ describe('isMessage', () => {
     expect(isMessage({ type: 'po/toggle' })).toBe(true);
     expect(isMessage({ type: 'po/keep', origin: 'http://a.test', on: true })).toBe(true);
     expect(isMessage({ type: 'po/granted', origin: 'http://a.test' })).toBe(true);
+    expect(isMessage({ type: 'po/show' })).toBe(true);
   });
 
   it('rejects anything else', () => {
