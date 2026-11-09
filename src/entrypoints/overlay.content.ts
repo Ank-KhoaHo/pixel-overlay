@@ -29,7 +29,8 @@ export default defineContentScript({
 
     try {
       const origin = location.origin;
-      const store = createSiteStore(chromeLocalArea(), origin);
+      const area = chromeLocalArea();
+      const store = createSiteStore(area, origin);
       const images = new Map<string, string>();
       let currentState: SiteState = emptySiteState();
       let panelView: PanelView | null = null;
@@ -59,6 +60,7 @@ export default defineContentScript({
             if (!panelView) {
               panelView = mountPanel({
                 doc: document,
+                area,
                 async onAddLayer(newLayer, dataUrl) {
                   try {
                     await store.putImage(newLayer.imageId, dataUrl);

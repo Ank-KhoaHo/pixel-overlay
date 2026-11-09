@@ -1,5 +1,8 @@
-import React, { useRef, useState } from 'react';
-import type { LayerPatch, NewLayer, SiteState } from '../core/types';
+import React, { useEffect, useRef, useState } from 'react';
+import { browser } from 'wxt/browser';
+import { KEPT_KEY, type LayerPatch, type NewLayer, type SiteState } from '../core/types';
+import type { StorageAreaLike } from '../shared/storage';
+import { chromeLocalArea } from '../shared/store';
 import { AddImage, processFiles } from './AddImage';
 import { LayerControls } from './LayerControls';
 import { LayerList } from './LayerList';
@@ -8,6 +11,7 @@ export interface PanelProps {
   state: SiteState;
   images: Map<string, string>;
   hostEl: HTMLElement;
+  area?: StorageAreaLike;
   onAddLayer: (newLayer: NewLayer, dataUrl: string) => Promise<void>;
   onSelectLayer: (id: string) => void;
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
@@ -24,6 +28,7 @@ export function Panel({
   state,
   images,
   hostEl,
+  area: propArea,
   onAddLayer,
   onSelectLayer,
   onUpdateLayer,
@@ -36,7 +41,72 @@ export function Panel({
   onSavePanelPosition,
 }: PanelProps) {
   const [error, setError] = useState<string>('');
+  const [checkedState, setCheckedState] = useState<boolean>(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const areaRef = useRef<StorageAreaLike>(propArea ?? chromeLocalArea());
+  if (propArea) {
+    areaRef.current = propArea;
+  }
+
+  useEffect(() => {
+    let active = true;
+    const currentArea = areaRef.current;
+
+    const syncKept = async () => {
+      try {
+        const data = await currentArea.get(KEPT_KEY);
+        const list = data[KEPT_KEY];
+        const kept = Array.isArray(list) && list.includes(location.origin);
+        if (active) {
+          setCheckedState(kept);
+        }
+      } catch (err) {
+        console.warn('[pixel-overlay]', err);
+      }
+    };
+
+    void syncKept();
+
+    const listener = (changes: Record<string, { newValue?: unknown }>) => {
+      if (Object.prototype.hasOwnProperty.call(changes, KEPT_KEY)) {
+        const list = changes[KEPT_KEY]?.newValue;
+        const kept = Array.isArray(list) && list.includes(location.origin);
+        if (active) {
+          setCheckedState(kept);
+        }
+      }
+    };
+
+    currentArea.onChanged.addListener(listener);
+
+    const win = hostEl.ownerDocument.defaultView ?? window;
+    const handleFocus = () => {
+      void syncKept();
+    };
+    win.addEventListener('focus', handleFocus);
+
+    return () => {
+      active = false;
+      currentArea.onChanged.removeListener(listener);
+      win.removeEventListener('focus', handleFocus);
+    };
+  }, [hostEl]);
+
+  const handleKeepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextChecked = e.target.checked;
+    setCheckedState(nextChecked);
+    try {
+      void browser.runtime.sendMessage({
+        type: 'po/keep',
+        origin: location.origin,
+        on: nextChecked,
+      }).catch((err) => {
+        console.warn('[pixel-overlay]', err);
+      });
+    } catch (err) {
+      console.warn('[pixel-overlay]', err);
+    }
+  };
 
   const dragRef = useRef<{
     startX: number;
@@ -237,7 +307,13 @@ export function Panel({
               </button>
             </div>
             <label className="keep-label">
-              <input type="checkbox" data-po="keep" disabled /> Keep on this site
+              <input
+                type="checkbox"
+                data-po="keep"
+                checked={checkedState}
+                onChange={handleKeepChange}
+              />{' '}
+              Keep on this site
             </label>
           </div>
 

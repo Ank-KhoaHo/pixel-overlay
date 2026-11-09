@@ -2,10 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Pixel Overlay — keep this site</title>
+    <title>Pixel Overlay</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 13px;
+        color: #111;
+        background: #fff;
+        box-sizing: border-box;
+      }
+      p {
+        margin: 0 0 12px 0;
+        line-height: 1.4;
+      }
+      button {
+        font-family: inherit;
+        font-size: 13px;
+        padding: 6px 16px;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 8px;
+        color: #c00;
+      }
+    </style>
   </head>
   <body>
-    <p id="text">Stub from Task 1. Task 6 builds this page.</p>
+    <div id="app"></div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

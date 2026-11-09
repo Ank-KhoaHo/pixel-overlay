@@ -1,11 +1,13 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { LayerPatch, NewLayer, SiteState } from '../core/types';
+import type { StorageAreaLike } from '../shared/storage';
 import { Panel } from './Panel';
 import panelCss from './panel.css?inline';
 
 export interface PanelMountOptions {
   doc: Document;
+  area?: StorageAreaLike;
   onAddLayer: (newLayer: NewLayer, dataUrl: string) => Promise<void>;
   onSelectLayer: (id: string) => void;
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
@@ -91,6 +93,7 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
             state={s}
             images={latestImages}
             hostEl={host}
+            area={opts.area}
             onAddLayer={opts.onAddLayer}
             onSelectLayer={opts.onSelectLayer}
             onUpdateLayer={opts.onUpdateLayer}
