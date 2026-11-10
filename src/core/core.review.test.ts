@@ -56,6 +56,7 @@ describe('emptySiteState', () => {
       layers: [],
       activeLayerId: null,
       blend: 'normal',
+      invert: false,
       shown: true,
       allHidden: false,
       panel: { x: -1, y: 16, collapsed: false },
@@ -251,7 +252,7 @@ describe('parseSiteState', () => {
     ['a string', 'hello'],
     ['an array', []],
     ['wrong version', { ...emptySiteState(), schemaVersion: 2 }],
-    ['bad blend', { ...emptySiteState(), blend: 'multiply' }],
+    // A6: an unknown blend no longer rejects the state; it reads as Normal (a6.review.test.ts).
     ['layers not an array', { ...emptySiteState(), layers: {} }],
     ['active id that does not exist', { ...emptySiteState(), activeLayerId: 'ghost' }],
     ['panel missing', { ...emptySiteState(), panel: undefined }],

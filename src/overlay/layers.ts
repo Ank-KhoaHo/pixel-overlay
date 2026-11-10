@@ -1,4 +1,4 @@
-import type { Layer, SiteState } from '../core/types';
+import type { Blend, Layer, SiteState } from '../core/types';
 import { keyToNudge } from '../core/keys';
 import { shadowModeFor } from './shadowMode';
 
@@ -24,7 +24,7 @@ export function mountLayers(opts: {
   `;
   shadow.appendChild(styleEl);
 
-  function applyHostStyles(el: HTMLElement, blend: 'normal' | 'difference') {
+  function applyHostStyles(el: HTMLElement, blend: Blend) {
     el.style.setProperty('position', 'absolute', 'important');
     el.style.setProperty('left', '0', 'important');
     el.style.setProperty('top', '0', 'important');
@@ -60,6 +60,7 @@ export function mountLayers(opts: {
     layer: Layer,
     isActiveUnlocked: boolean,
     isDragging: boolean,
+    invert: boolean,
   ) {
     img.style.position = 'absolute';
     if (!isDragging) {
@@ -71,6 +72,11 @@ export function mountLayers(opts: {
     img.style.maxWidth = 'none';
     img.style.maxHeight = 'none';
     img.style.opacity = String(layer.opacity);
+    if (invert) {
+      img.style.filter = 'invert(1)';
+    } else {
+      img.style.removeProperty('filter');
+    }
     img.style.margin = '0';
     img.style.padding = '0';
     img.style.border = '0';
@@ -321,7 +327,7 @@ export function mountLayers(opts: {
 
           const isActiveUnlocked = s.activeLayerId === layer.id && !layer.locked;
           const isDragging = activeDraggingId === layer.id;
-          applyImageStyles(img, layer, isActiveUnlocked, isDragging);
+          applyImageStyles(img, layer, isActiveUnlocked, isDragging, s.invert);
 
           shadow.appendChild(img);
         }

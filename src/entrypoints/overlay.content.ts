@@ -8,6 +8,7 @@ import {
   selectLayer,
   setAllHidden,
   setBlend,
+  setInvert,
   setPanel,
   setShown,
   updateLayer,
@@ -187,6 +188,15 @@ export default defineContentScript({
                 onSetBlend(blend) {
                   try {
                     currentState = setBlend(currentState, blend);
+                    renderAll();
+                    void saveState();
+                  } catch (err) {
+                    console.warn('[pixel-overlay]', err);
+                  }
+                },
+                onSetInvert(invert) {
+                  try {
+                    currentState = setInvert(currentState, invert);
                     renderAll();
                     void saveState();
                   } catch (err) {

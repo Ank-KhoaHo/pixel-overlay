@@ -3,6 +3,7 @@ import {
   MAX_SCALE,
   MIN_SCALE,
   PANEL_DEFAULT,
+  type Blend,
   type Layer,
   type LayerPatch,
   type NewLayer,
@@ -15,6 +16,7 @@ export function emptySiteState(): SiteState {
     layers: [],
     activeLayerId: null,
     blend: 'normal',
+    invert: false,
     shown: true,
     allHidden: false,
     panel: { ...PANEL_DEFAULT },
@@ -56,8 +58,18 @@ export function parseSiteState(raw: unknown): SiteState | null {
   if (s.schemaVersion !== 1) {
     return null;
   }
-  if (s.blend !== 'normal' && s.blend !== 'difference') {
-    return null;
+  let blend: Blend = 'normal';
+  if (
+    s.blend === 'normal' ||
+    s.blend === 'difference' ||
+    s.blend === 'multiply' ||
+    s.blend === 'screen'
+  ) {
+    blend = s.blend;
+  }
+  let invert = false;
+  if (typeof s.invert === 'boolean') {
+    invert = s.invert;
   }
   if (typeof s.shown !== 'boolean') {
     return null;
@@ -119,7 +131,8 @@ export function parseSiteState(raw: unknown): SiteState | null {
       locked: l.locked,
     })),
     activeLayerId: s.activeLayerId,
-    blend: s.blend,
+    blend,
+    invert,
     shown: s.shown,
     allHidden,
     panel: {
@@ -331,13 +344,23 @@ export function moveLayer(s: SiteState, id: string, dir: 'up' | 'down'): SiteSta
   };
 }
 
-export function setBlend(s: SiteState, blend: 'normal' | 'difference'): SiteState {
+export function setBlend(s: SiteState, blend: Blend): SiteState {
   if (s.blend === blend) {
     return s;
   }
   return {
     ...s,
     blend,
+  };
+}
+
+export function setInvert(s: SiteState, on: boolean): SiteState {
+  if (s.invert === on) {
+    return s;
+  }
+  return {
+    ...s,
+    invert: on,
   };
 }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import type { LayerPatch, NewLayer, SiteState } from '../core/types';
+import type { Blend, LayerPatch, NewLayer, SiteState } from '../core/types';
 import { shadowModeFor } from '../overlay/shadowMode';
 import type { StorageAreaLike } from '../shared/storage';
 import { Panel } from './Panel';
@@ -14,7 +14,8 @@ export interface PanelMountOptions {
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
   onMoveLayer: (id: string, dir: 'up' | 'down') => void;
   onDeleteLayer: (id: string) => void;
-  onSetBlend: (blend: 'normal' | 'difference') => void;
+  onSetBlend: (blend: Blend) => void;
+  onSetInvert: (invert: boolean) => void;
   onSetAllHidden: (hidden: boolean) => void;
   onSetCollapsed: (collapsed: boolean) => void;
   onClose: () => void;
@@ -106,6 +107,7 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
             onMoveLayer={opts.onMoveLayer}
             onDeleteLayer={opts.onDeleteLayer}
             onSetBlend={opts.onSetBlend}
+            onSetInvert={opts.onSetInvert}
             onSetAllHidden={opts.onSetAllHidden}
             onSetCollapsed={opts.onSetCollapsed}
             onClose={opts.onClose}

@@ -12,11 +12,14 @@ export interface Layer {
   locked: boolean;
 }
 
+export type Blend = 'normal' | 'difference' | 'multiply' | 'screen';
+
 export interface SiteState {
   schemaVersion: 1;
   layers: Layer[];
   activeLayerId: string | null;
-  blend: 'normal' | 'difference';
+  blend: Blend;
+  invert: boolean;
   shown: boolean;
   allHidden: boolean;
   panel: { x: number; y: number; collapsed: boolean };

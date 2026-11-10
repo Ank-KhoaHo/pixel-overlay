@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
-import { KEPT_KEY, type LayerPatch, type NewLayer, type SiteState } from '../core/types';
+import {
+  KEPT_KEY,
+  type Blend,
+  type LayerPatch,
+  type NewLayer,
+  type SiteState,
+} from '../core/types';
 import type { StorageAreaLike } from '../shared/storage';
 import { chromeLocalArea } from '../shared/store';
 import { AddImage, processFiles } from './AddImage';
@@ -19,7 +25,8 @@ export interface PanelProps {
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
   onMoveLayer: (id: string, dir: 'up' | 'down') => void;
   onDeleteLayer: (id: string) => void;
-  onSetBlend: (blend: 'normal' | 'difference') => void;
+  onSetBlend: (blend: Blend) => void;
+  onSetInvert: (invert: boolean) => void;
   onSetAllHidden: (hidden: boolean) => void;
   onSetCollapsed: (collapsed: boolean) => void;
   onClose: () => void;
@@ -39,6 +46,7 @@ export function Panel({
   onMoveLayer,
   onDeleteLayer,
   onSetBlend,
+  onSetInvert,
   onSetAllHidden,
   onSetCollapsed,
   onClose,
@@ -304,34 +312,58 @@ export function Panel({
       {!state.panel.collapsed && (
         <>
           <div className="panel-view-row">
-            <div className="panel-view-buttons">
-              <button
-                type="button"
-                data-po="blend"
-                aria-pressed={state.blend === 'difference' ? 'true' : 'false'}
-                onClick={handleBlendToggle}
-              >
-                Difference
-              </button>
-              <button
-                type="button"
-                data-po="hide-all"
+            <div className="panel-view-row-top">
+              <div className="panel-view-buttons">
+                <button
+                  type="button"
+                  data-po="blend"
+                  aria-pressed={state.blend === 'difference' ? 'true' : 'false'}
+                  onClick={handleBlendToggle}
+                >
+                  Difference
+                </button>
+                <button
+                  type="button"
+                  data-po="hide-all"
+                  disabled={!hasLayers}
+                  aria-pressed={state.allHidden ? 'true' : 'false'}
+                  onClick={handleHideAllToggle}
+                >
+                  Hide all
+                </button>
+              </div>
+              <label className="keep-label">
+                <input
+                  type="checkbox"
+                  data-po="keep"
+                  checked={isKept}
+                  onChange={handleKeepChange}
+                />{' '}
+                Keep on this site
+              </label>
+            </div>
+            <div className="panel-compare-row">
+              <select
+                data-po="blend-mode"
                 disabled={!hasLayers}
-                aria-pressed={state.allHidden ? 'true' : 'false'}
-                onClick={handleHideAllToggle}
+                value={state.blend}
+                onChange={(e) => onSetBlend(e.target.value as Blend)}
               >
-                Hide all
+                <option value="normal">Normal</option>
+                <option value="difference">Difference</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+              </select>
+              <button
+                type="button"
+                data-po="invert"
+                disabled={!hasLayers}
+                aria-pressed={state.invert ? 'true' : 'false'}
+                onClick={() => onSetInvert(!state.invert)}
+              >
+                Invert
               </button>
             </div>
-            <label className="keep-label">
-              <input
-                type="checkbox"
-                data-po="keep"
-                checked={isKept}
-                onChange={handleKeepChange}
-              />{' '}
-              Keep on this site
-            </label>
           </div>
 
           <AddImage
