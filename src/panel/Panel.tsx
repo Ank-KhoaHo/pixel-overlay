@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
+import { isKeepable, siteOf } from '../core/site';
 import {
   KEPT_KEY,
   type Blend,
@@ -59,6 +60,8 @@ export function Panel({
   if (propArea) {
     areaRef.current = propArea;
   }
+  const site = siteOf(location.href);
+  const keepable = site !== null && isKeepable(site);
 
   useEffect(() => {
     if (propError !== undefined) {
@@ -68,10 +71,14 @@ export function Panel({
 
   const syncKept = async () => {
     try {
+      if (!site || !keepable) {
+        setIsKept(false);
+        return;
+      }
       const currentArea = areaRef.current;
       const data = await currentArea.get(KEPT_KEY);
       const list = data[KEPT_KEY];
-      const kept = Array.isArray(list) && list.includes(location.origin);
+      const kept = Array.isArray(list) && list.includes(site);
       setIsKept(kept);
     } catch (err) {
       console.warn('[pixel-overlay]', err);
@@ -85,8 +92,12 @@ export function Panel({
 
     const listener = (changes: Record<string, { newValue?: unknown }>) => {
       if (Object.prototype.hasOwnProperty.call(changes, KEPT_KEY)) {
+        if (!site || !keepable) {
+          setIsKept(false);
+          return;
+        }
         const list = changes[KEPT_KEY]?.newValue;
-        const kept = Array.isArray(list) && list.includes(location.origin);
+        const kept = Array.isArray(list) && list.includes(site);
         setIsKept(kept);
       }
     };
@@ -103,15 +114,16 @@ export function Panel({
       currentArea.onChanged.removeListener(listener);
       win.removeEventListener('focus', handleFocus);
     };
-  }, [hostEl]);
+  }, [hostEl, site, keepable]);
 
   const handleKeepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!site || !keepable) return;
     const nextChecked = e.target.checked;
     setIsKept(nextChecked);
     try {
       void browser.runtime.sendMessage({
         type: 'po/keep',
-        origin: location.origin,
+        origin: site,
         on: nextChecked,
       }).catch((err) => {
         console.warn('[pixel-overlay]', err);
@@ -336,10 +348,11 @@ export function Panel({
                 <input
                   type="checkbox"
                   data-po="keep"
+                  disabled={!keepable}
                   checked={isKept}
                   onChange={handleKeepChange}
                 />{' '}
-                Keep on this site
+                {keepable ? 'Keep on this site' : 'Keep on this site (not for local files)'}
               </label>
             </div>
             <div className="panel-compare-row">

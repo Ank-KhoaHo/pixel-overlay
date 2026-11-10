@@ -64,6 +64,10 @@ and switching it off gives the permission back.
 - Images: PNG, JPEG, WebP and GIF, up to 25 MB each. SVG is not accepted.
 - Layers are kept per site (scheme, host and port), not per page: `/login` and `/home` on the
   same site share one list. Hide the layers you are not using.
+- Local files (`file://`) work in Chrome after you turn on **Allow access to file URLs** in the
+  extension's details; Pixel Veil opens a page that shows how. Layers are kept per folder there,
+  and **Keep on this site** is off. Firefox does not allow it: serve the folder with a local web
+  server instead.
 - Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
 - On the rare page that sets a CSS `transform` on `<html>`, the panel scrolls with the page.
 - Built for Chrome and Chromium browsers. A Firefox build exists (`npm run build:firefox`,

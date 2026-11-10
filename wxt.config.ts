@@ -3,7 +3,7 @@ import { defineConfig } from 'wxt';
 // See docs/superpowers/specs/A1-free-design-overlay-chrome-extension.md, section 7.
 // No site access at install: the icon click uses activeTab, and a site is kept
 // (layers restored after reload) only after the user grants that one origin.
-// The e2e build (`wxt build --mode e2e`, output .output/chrome-mv3-e2e) adds localhost,
+// The e2e build (`wxt build --mode e2e`, output .output/chrome-mv3-e2e) adds localhost and file:///*,
 // because Playwright cannot click Chrome's permission prompt. Never ship that build.
 // Firefox (`npm run build:firefox`, ticket A3) adds the gecko id that signing needs and declares
 // that the extension collects no data (required for new AMO listings); the Chrome manifests
@@ -21,7 +21,7 @@ export default defineConfig({
       'Lay design images over a live page and check it pixel by pixel. Unlimited layers, free.',
     permissions: ['activeTab', 'scripting', 'storage', 'unlimitedStorage'],
     optional_host_permissions: ['<all_urls>'],
-    ...(mode === 'e2e' ? { host_permissions: ['http://localhost/*'] } : {}),
+    ...(mode === 'e2e' ? { host_permissions: ['http://localhost/*', 'file:///*'] } : {}),
     action: { default_title: 'Pixel Veil' },
     // A7. Chrome takes at most 4 suggested keys; users rebind all of them in
     // chrome://extensions/shortcuts. toggle-difference ships without a key.

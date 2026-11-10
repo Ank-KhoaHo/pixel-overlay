@@ -1,11 +1,21 @@
 import { COMMANDS, type CommandName } from '../core/commands';
 import { isMessage } from '../core/messages';
-import { originOf } from '../core/site';
+import { needsFileAccessHelp, originOf } from '../core/site';
 import { chromeLocalArea } from '../shared/store';
 import { keep, reconcileKept, syncRegistration, unkeep, type KeptDeps } from '../background/kept';
 
-export async function clickTab(tabId: number): Promise<void> {
+export async function clickTab(tabId: number, url?: string): Promise<void> {
   try {
+    let resolvedUrl = url;
+    if (!resolvedUrl) {
+      try {
+        const tab = await browser.tabs.get(tabId);
+        resolvedUrl = tab.url;
+      } catch {
+        // ignore
+      }
+    }
+
     let isLive = false;
     try {
       const reply = (await browser.tabs.sendMessage(tabId, { type: 'po/ping' })) as
@@ -21,6 +31,19 @@ export async function clickTab(tabId: number): Promise<void> {
     if (isLive) {
       await browser.tabs.sendMessage(tabId, { type: 'po/toggle' });
     } else {
+      let fileAccessAllowed = false;
+      try {
+        fileAccessAllowed = await browser.extension.isAllowedFileSchemeAccess();
+      } catch {
+        fileAccessAllowed = false;
+      }
+      if (needsFileAccessHelp(resolvedUrl, fileAccessAllowed)) {
+        await browser.tabs.create({
+          url: browser.runtime.getURL('/local-files.html'),
+        });
+        return;
+      }
+
       await browser.scripting.executeScript({
         target: { tabId },
         files: ['/content-scripts/overlay.js'],
@@ -147,7 +170,7 @@ export default defineBackground(() => {
 
   browser.action.onClicked.addListener(async (tab) => {
     if (tab.id === undefined) return;
-    await clickTab(tab.id);
+    await clickTab(tab.id, tab.url);
   });
 
   browser.commands.onCommand.addListener((name, tab) => {

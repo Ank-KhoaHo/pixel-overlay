@@ -1,5 +1,6 @@
 import { applyCommand } from '../core/commands';
 import { isMessage } from '../core/messages';
+import { siteOf } from '../core/site';
 import {
   addLayer,
   emptySiteState,
@@ -63,9 +64,9 @@ export default defineContentScript({
     win.__pixelOverlayAlive = isAlive;
 
     try {
-      const origin = location.origin;
+      const site = siteOf(location.href) ?? location.origin;
       const area = chromeLocalArea();
-      const store = createSiteStore(area, origin);
+      const store = createSiteStore(area, site);
       const images = new Map<string, string>();
       let currentState: SiteState = emptySiteState();
       let panelView: PanelView | null = null;
