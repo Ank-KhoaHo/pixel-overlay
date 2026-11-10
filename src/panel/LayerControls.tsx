@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { centerX, fitWidth } from '../core/align';
 import { MAX_SCALE, MIN_SCALE, type Layer, type LayerPatch } from '../core/types';
 
 export interface LayerControlsProps {
@@ -101,6 +102,17 @@ export function LayerControls({ layer, onUpdateLayer }: LayerControlsProps) {
     onUpdateLayer(layer.id, { opacity: clamped / 100 });
   };
 
+  const handleCenter = () => {
+    const cw = document.documentElement.clientWidth;
+    onUpdateLayer(layer.id, { x: centerX(layer, cw) });
+  };
+
+  const handleFitWidth = () => {
+    const cw = document.documentElement.clientWidth;
+    const { scale, x } = fitWidth(layer, cw);
+    onUpdateLayer(layer.id, { scale, x });
+  };
+
   return (
     <div className="panel-controls-section">
       <div className="control-row">
@@ -176,6 +188,26 @@ export function LayerControls({ layer, onUpdateLayer }: LayerControlsProps) {
           onClick={() => onUpdateLayer(layer.id, { scale: 0.5 })}
         >
           ½ (for @2x)
+        </button>
+      </div>
+
+      <div className="control-row">
+        <span className="control-label">Align</span>
+        <button
+          type="button"
+          data-po="center"
+          disabled={layer.locked}
+          onClick={handleCenter}
+        >
+          Center
+        </button>
+        <button
+          type="button"
+          data-po="fit-width"
+          disabled={layer.locked}
+          onClick={handleFitWidth}
+        >
+          Fit width
         </button>
       </div>
 

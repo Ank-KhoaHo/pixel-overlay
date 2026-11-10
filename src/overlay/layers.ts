@@ -1,4 +1,5 @@
 import type { Blend, Layer, SiteState } from '../core/types';
+import { snap } from '../core/align';
 import { keyToNudge } from '../core/keys';
 import { shadowModeFor } from './shadowMode';
 
@@ -133,17 +134,30 @@ export function mountLayers(opts: {
       }
     });
 
+    const computePosition = (clientX: number, clientY: number, altKey: boolean) => {
+      const dx = clientX - dragStartX;
+      const dy = clientY - dragStartY;
+      const rawX = Math.round(dragInitialX + dx);
+      const rawY = Math.round(dragInitialY + dy);
+      if (altKey) {
+        return { x: rawX, y: rawY };
+      }
+      const layer = currentState?.layers.find((l) => l.id === layerId);
+      const w = layer ? layer.naturalWidth * layer.scale : 0;
+      const pageWidth =
+        opts.doc.documentElement?.clientWidth ??
+        (opts.doc.defaultView ?? window).innerWidth;
+      return snap({ x: rawX, y: rawY, w }, pageWidth);
+    };
+
     img.addEventListener('pointermove', (e: PointerEvent) => {
       try {
         if (!isDragging || (dragPointerId !== null && e.pointerId !== dragPointerId)) {
           return;
         }
-        const dx = e.clientX - dragStartX;
-        const dy = e.clientY - dragStartY;
-        const curX = Math.round(dragInitialX + dx);
-        const curY = Math.round(dragInitialY + dy);
-        img.style.left = `${curX}px`;
-        img.style.top = `${curY}px`;
+        const pos = computePosition(e.clientX, e.clientY, e.altKey);
+        img.style.left = `${pos.x}px`;
+        img.style.top = `${pos.y}px`;
       } catch (err) {
         console.warn('[pixel-overlay]', err);
       }
@@ -163,13 +177,10 @@ export function mountLayers(opts: {
           console.warn('[pixel-overlay]', err);
         }
         if (commit) {
-          const dx = e.clientX - dragStartX;
-          const dy = e.clientY - dragStartY;
-          const finalX = Math.round(dragInitialX + dx);
-          const finalY = Math.round(dragInitialY + dy);
-          img.style.left = `${finalX}px`;
-          img.style.top = `${finalY}px`;
-          opts.onMove(layerId, finalX, finalY);
+          const pos = computePosition(e.clientX, e.clientY, e.altKey);
+          img.style.left = `${pos.x}px`;
+          img.style.top = `${pos.y}px`;
+          opts.onMove(layerId, pos.x, pos.y);
         }
       } catch (err) {
         console.warn('[pixel-overlay]', err);
