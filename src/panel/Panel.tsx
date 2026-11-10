@@ -19,7 +19,9 @@ import { LayerList } from './LayerList';
 export interface PanelProps {
   state: SiteState;
   images: Map<string, string>;
-  hostEl: HTMLElement;
+  hostEl?: HTMLElement;
+  mode?: 'page' | 'side';
+  site?: string;
   area?: StorageAreaLike;
   error?: string;
   onError?: (err: string) => void;
@@ -35,12 +37,15 @@ export interface PanelProps {
   onSetCollapsed: (collapsed: boolean) => void;
   onClose: () => void;
   onSavePanelPosition: (x: number, y: number) => void;
+  onAlign: (id: string, how: 'center' | 'fit-width') => void;
 }
 
 export function Panel({
   state,
   images,
   hostEl,
+  mode = 'page',
+  site: propSite,
   area: propArea,
   error: propError,
   onError: propOnError,
@@ -56,6 +61,7 @@ export function Panel({
   onSetCollapsed,
   onClose,
   onSavePanelPosition,
+  onAlign,
 }: PanelProps) {
   const [error, setError] = useState<string>(propError ?? '');
   const [isKept, setIsKept] = useState<boolean>(false);
@@ -64,8 +70,8 @@ export function Panel({
   if (propArea) {
     areaRef.current = propArea;
   }
-  const site = siteOf(location.href);
-  const keepable = site !== null && isKeepable(site);
+  const site = propSite ?? siteOf(location.href);
+  const keepable = site !== null && site !== undefined && isKeepable(site);
 
   useEffect(() => {
     if (propError !== undefined) {
@@ -108,7 +114,7 @@ export function Panel({
 
     currentArea.onChanged.addListener(listener);
 
-    const win = hostEl.ownerDocument.defaultView ?? window;
+    const win = hostEl?.ownerDocument.defaultView ?? window;
     const handleFocus = () => {
       void syncKept();
     };
@@ -149,6 +155,8 @@ export function Panel({
   } | null>(null);
 
   const handleHeaderPointerDown = (e: React.PointerEvent) => {
+    if (mode === 'side') return;
+    if (!hostEl) return;
     if (e.button !== 0) return;
     if ((e.target as HTMLElement).closest('button')) return;
 
@@ -179,6 +187,8 @@ export function Panel({
   };
 
   const handleHeaderPointerMove = (e: React.PointerEvent) => {
+    if (mode === 'side') return;
+    if (!hostEl) return;
     if (!dragRef.current) return;
     const win = hostEl.ownerDocument.defaultView ?? window;
     const maxLeft = Math.max(0, win.innerWidth - 300);
@@ -194,6 +204,8 @@ export function Panel({
   };
 
   const handleHeaderPointerUp = (e: React.PointerEvent) => {
+    if (mode === 'side') return;
+    if (!hostEl) return;
     if (!dragRef.current) return;
     const { startX, startY, initialLeft, initialTop, hasMoved } = dragRef.current;
     dragRef.current = null;
@@ -284,16 +296,16 @@ export function Panel({
       for (const [id, dataUrl] of images.entries()) {
         imagesObj[id] = dataUrl;
       }
-      const currentSite = siteOf(location.href) ?? location.origin;
       const now = new Date();
-      const data = buildExport(currentSite, state, imagesObj, now);
+      const exportSite = site ?? '';
+      const data = buildExport(exportSite, state, imagesObj, now);
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const blobUrl = URL.createObjectURL(blob);
 
-      const filename = exportFilename(location.host, now);
+      const filename = exportFilename(exportSite, now);
 
-      const doc = hostEl.ownerDocument;
+      const doc = hostEl?.ownerDocument ?? document;
       const a = doc.createElement('a');
       a.href = blobUrl;
       a.download = filename;
@@ -314,51 +326,81 @@ export function Panel({
   return (
     <div
       ref={rootRef}
-      className="pixel-overlay-panel-root"
+      className={mode === 'side' ? 'pixel-overlay-panel-root side-mode' : 'pixel-overlay-panel-root'}
       tabIndex={0}
       onPaste={handlePaste}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       <div
-        className={state.panel.collapsed ? 'panel-header collapsed' : 'panel-header'}
-        onPointerDown={handleHeaderPointerDown}
-        onPointerMove={handleHeaderPointerMove}
-        onPointerUp={handleHeaderPointerUp}
-        onPointerCancel={handleHeaderPointerUp}
+        className={
+          mode === 'side'
+            ? 'panel-header side'
+            : state.panel.collapsed
+              ? 'panel-header collapsed'
+              : 'panel-header'
+        }
+        onPointerDown={mode === 'side' ? undefined : handleHeaderPointerDown}
+        onPointerMove={mode === 'side' ? undefined : handleHeaderPointerMove}
+        onPointerUp={mode === 'side' ? undefined : handleHeaderPointerUp}
+        onPointerCancel={mode === 'side' ? undefined : handleHeaderPointerUp}
       >
         <span data-po="title" className="panel-title">
           Pixel Veil
         </span>
         <div className="panel-header-buttons">
-          <button
-            type="button"
-            data-po="collapse"
-            className="panel-header-btn"
-            title={state.panel.collapsed ? 'Expand panel' : 'Collapse panel'}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSetCollapsed(!state.panel.collapsed);
-            }}
-          >
-            {state.panel.collapsed ? '▾' : '▴'}
-          </button>
-          <button
-            type="button"
-            data-po="close"
-            className="panel-header-btn"
-            title="Close panel"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-          >
-            ×
-          </button>
+          {mode === 'page' && import.meta.env.BROWSER !== 'firefox' && (
+            <button
+              type="button"
+              data-po="side-panel"
+              className="panel-side-btn"
+              title="Side panel"
+              onClick={(e) => {
+                e.stopPropagation();
+                try {
+                  void browser.runtime.sendMessage({ type: 'po/side-panel' }).catch((err) => {
+                    console.warn('[pixel-overlay]', err);
+                  });
+                } catch (err) {
+                  console.warn('[pixel-overlay]', err);
+                }
+              }}
+            >
+              Side panel
+            </button>
+          )}
+          {mode !== 'side' && (
+            <>
+              <button
+                type="button"
+                data-po="collapse"
+                className="panel-header-btn"
+                title={state.panel.collapsed ? 'Expand panel' : 'Collapse panel'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSetCollapsed(!state.panel.collapsed);
+                }}
+              >
+                {state.panel.collapsed ? '▾' : '▴'}
+              </button>
+              <button
+                type="button"
+                data-po="close"
+                className="panel-header-btn"
+                title="Close panel"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+              >
+                ×
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {!state.panel.collapsed && (
+      {(mode === 'side' || !state.panel.collapsed) && (
         <>
           <div className="panel-view-row">
             <div className="panel-view-row-top">
@@ -442,7 +484,7 @@ export function Panel({
             onDeleteLayer={onDeleteLayer}
           />
 
-          <LayerControls layer={activeLayer} onUpdateLayer={onUpdateLayer} />
+          <LayerControls layer={activeLayer} onUpdateLayer={onUpdateLayer} onAlign={onAlign} />
         </>
       )}
     </div>

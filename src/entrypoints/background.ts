@@ -109,6 +109,7 @@ export async function runCommand(name: string, tabId?: number): Promise<void> {
 if (import.meta.env.MODE === 'e2e' || import.meta.env.PO_E2E) {
   (self as unknown as { poClick: typeof clickTab }).poClick = clickTab;
   (self as unknown as { poCommand: typeof runCommand }).poCommand = runCommand;
+  (self as unknown as { poSidePanelLog: string[] }).poSidePanelLog = [];
 }
 
 function createKeptDeps(): KeptDeps {
@@ -179,9 +180,33 @@ export default defineBackground(() => {
     });
   });
 
-  browser.runtime.onMessage.addListener((msg: unknown) => {
+  browser.runtime.onMessage.addListener((msg: unknown, sender) => {
     try {
       if (!isMessage(msg)) return;
+
+      if (msg.type === 'po/side-panel') {
+        const tabId = sender.tab?.id;
+        if (tabId !== undefined) {
+          try {
+            const openPromise = browser.sidePanel?.open({ tabId });
+            const log = (self as unknown as { poSidePanelLog?: string[] }).poSidePanelLog;
+            if (log && openPromise) {
+              openPromise
+                .then(() => {
+                  log.push('ok');
+                })
+                .catch((err: unknown) => {
+                  log.push(err instanceof Error ? err.message : String(err));
+                });
+            }
+          } catch (err: unknown) {
+            const log = (self as unknown as { poSidePanelLog?: string[] }).poSidePanelLog;
+            log?.push(err instanceof Error ? err.message : String(err));
+            console.warn('[pixel-overlay]', err);
+          }
+        }
+        return;
+      }
 
       if (msg.type === 'po/keep') {
         const origin = originOf(msg.origin);

@@ -21,12 +21,14 @@ export interface PanelMountOptions {
   onSetCollapsed: (collapsed: boolean) => void;
   onClose: () => void;
   onSavePanelPosition: (x: number, y: number) => void;
+  onAlign: (id: string, how: 'center' | 'fit-width') => void;
 }
 
 export interface PanelView {
   render(s: SiteState, images: Map<string, string>, error?: string): void;
   destroy(): void;
   blur(): void;
+  setHidden(hidden: boolean): void;
 }
 
 function applyHostPosition(host: HTMLElement, panel: { x: number; y: number }, win: Window) {
@@ -71,10 +73,14 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
 
   let latestState: SiteState | null = null;
   let latestImages: Map<string, string> = new Map();
+  let isHidden = false;
 
   const handleResize = () => {
     if (latestState) {
       applyHostPosition(host, latestState.panel, win);
+      if (isHidden) {
+        host.style.setProperty('display', 'none', 'important');
+      }
     }
   };
 
@@ -94,6 +100,9 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
         latestState = s;
         latestImages = images;
         applyHostPosition(host, s.panel, win);
+        if (isHidden) {
+          host.style.setProperty('display', 'none', 'important');
+        }
 
         root.render(
           <Panel
@@ -114,10 +123,20 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
             onSetCollapsed={opts.onSetCollapsed}
             onClose={opts.onClose}
             onSavePanelPosition={opts.onSavePanelPosition}
+            onAlign={opts.onAlign}
           />,
         );
       } catch (err) {
         console.warn('[pixel-overlay]', err);
+      }
+    },
+
+    setHidden(hidden: boolean) {
+      isHidden = hidden;
+      if (isHidden) {
+        host.style.setProperty('display', 'none', 'important');
+      } else {
+        host.style.setProperty('display', 'block', 'important');
       }
     },
 

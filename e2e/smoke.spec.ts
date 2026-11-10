@@ -12,7 +12,7 @@ test('the test build loads and its worker starts', async () => {
     const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
     expect(manifest.name).toBe('Pixel Veil');
     expect(manifest.host_permissions).toEqual(['http://localhost/*', 'file:///*']);
-    expect(manifest.permissions).toEqual(['activeTab', 'scripting', 'storage', 'unlimitedStorage']);
+    expect(manifest.permissions).toEqual(['activeTab', 'scripting', 'storage', 'unlimitedStorage', 'sidePanel']);
   } finally {
     await context.close();
   }

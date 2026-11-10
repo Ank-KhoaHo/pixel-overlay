@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { centerX, fitWidth } from '../core/align';
 import { MAX_SCALE, MIN_SCALE, type Layer, type LayerPatch } from '../core/types';
 
 export interface LayerControlsProps {
   layer: Layer | null;
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
+  onAlign: (id: string, how: 'center' | 'fit-width') => void;
 }
 
 interface NumberInputProps {
@@ -89,7 +89,7 @@ function NumberInput({
   );
 }
 
-export function LayerControls({ layer, onUpdateLayer }: LayerControlsProps) {
+export function LayerControls({ layer, onUpdateLayer, onAlign }: LayerControlsProps) {
   if (!layer) {
     return null;
   }
@@ -103,14 +103,11 @@ export function LayerControls({ layer, onUpdateLayer }: LayerControlsProps) {
   };
 
   const handleCenter = () => {
-    const cw = document.documentElement.clientWidth;
-    onUpdateLayer(layer.id, { x: centerX(layer, cw) });
+    onAlign(layer.id, 'center');
   };
 
   const handleFitWidth = () => {
-    const cw = document.documentElement.clientWidth;
-    const { scale, x } = fitWidth(layer, cw);
-    onUpdateLayer(layer.id, { scale, x });
+    onAlign(layer.id, 'fit-width');
   };
 
   return (

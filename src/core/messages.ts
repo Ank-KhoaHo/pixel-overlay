@@ -6,7 +6,8 @@ export type Message =
   | { type: 'po/ping' }
   | { type: 'po/command'; name: CommandName }
   | { type: 'po/keep'; origin: string; on: boolean }
-  | { type: 'po/granted'; origin: string };
+  | { type: 'po/granted'; origin: string }
+  | { type: 'po/side-panel' };
 
 export function isMessage(x: unknown): x is Message {
   if (typeof x !== 'object' || x === null || Array.isArray(x)) {
@@ -16,7 +17,8 @@ export function isMessage(x: unknown): x is Message {
   if (
     obj.type === 'po/toggle' ||
     obj.type === 'po/show' ||
-    obj.type === 'po/ping'
+    obj.type === 'po/ping' ||
+    obj.type === 'po/side-panel'
   ) {
     return true;
   }

@@ -50,6 +50,7 @@ describe('Chrome store build stays as it was', () => {
     expect(typeof m.background?.service_worker).toBe('string');
     expect(m.browser_specific_settings).toBeUndefined();
     expect(m.host_permissions).toBeUndefined();
-    expect([...m.permissions].sort()).toEqual([...PERMS].sort());
+    // A10 adds the side panel, Chrome only.
+    expect([...m.permissions].sort()).toEqual([...PERMS, 'sidePanel'].sort());
   });
 });

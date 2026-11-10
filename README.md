@@ -45,6 +45,8 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 5. Click the icon again to hide everything.
 6. **Export** saves this site's layers and images to one `.json` file. **Import** adds the
    layers from such a file on top of the ones already there, on any site or computer.
+7. **Side panel** (Chrome) moves the controls into Chrome's side panel, so they stop covering a
+   narrow page. The page panel comes back when you close the side panel.
 
 Keyboard shortcuts (change them in `chrome://extensions/shortcuts`):
 

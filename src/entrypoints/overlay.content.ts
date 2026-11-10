@@ -1,5 +1,7 @@
+import { centerX, fitWidth } from '../core/align';
 import { applyCommand } from '../core/commands';
 import { isMessage } from '../core/messages';
+import { isPanelOp, SIDE_PORT, type SideUpdate } from '../core/remote';
 import { siteOf } from '../core/site';
 import {
   addLayer,
@@ -15,8 +17,8 @@ import {
   setShown,
   updateLayer,
 } from '../core/state';
-import { appendImported } from '../core/transfer';
-import type { SiteState } from '../core/types';
+import { appendImported, parseImport } from '../core/transfer';
+import type { Blend, Layer, LayerPatch, NewLayer, SiteState } from '../core/types';
 import { mountLayers } from '../overlay/layers';
 import { mountPanel, type PanelView } from '../panel/mountPanel';
 import { newId } from '../shared/ids';
@@ -109,6 +111,201 @@ export default defineContentScript({
         }
       };
 
+      const connectedPorts = new Set<
+        Parameters<Parameters<typeof browser.runtime.onConnect.addListener>[0]>[0]
+      >();
+
+      const handleAddLayer = async (newLayer: NewLayer, dataUrl: string) => {
+        try {
+          await store.putImage(newLayer.imageId, dataUrl);
+          images.set(newLayer.imageId, dataUrl);
+          currentState = addLayer(currentState, newLayer);
+          renderAll();
+          await store.save(currentState);
+          panelError = '';
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+          images.delete(newLayer.imageId);
+          try {
+            await store.removeImage(newLayer.imageId);
+          } catch (rmErr) {
+            console.warn('[pixel-overlay]', rmErr);
+          }
+          try {
+            currentState = await store.load();
+            await loadImagesForLayers(currentState.layers);
+          } catch (loadErr) {
+            console.warn('[pixel-overlay]', loadErr);
+          }
+          const msg = err instanceof Error ? err.message : String(err);
+          panelError = `Could not save: ${msg}`;
+          renderAll();
+          throw err;
+        }
+      };
+
+      const handleImportLayers = async (imported: {
+        layers: Layer[];
+        images: Record<string, string>;
+      }) => {
+        const appended = appendImported(currentState, imported, newId);
+        try {
+          for (const [id, dataUrl] of Object.entries(appended.images)) {
+            await store.putImage(id, dataUrl);
+            images.set(id, dataUrl);
+          }
+          currentState = appended.state;
+          renderAll();
+          await store.save(currentState);
+          panelError = '';
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+          for (const id of Object.keys(appended.images)) {
+            images.delete(id);
+            try {
+              await store.removeImage(id);
+            } catch (rmErr) {
+              console.warn('[pixel-overlay]', rmErr);
+            }
+          }
+          try {
+            currentState = await store.load();
+            await loadImagesForLayers(currentState.layers);
+          } catch (loadErr) {
+            console.warn('[pixel-overlay]', loadErr);
+          }
+          const msg = err instanceof Error ? err.message : String(err);
+          panelError = `Could not save: ${msg}`;
+          renderAll();
+          throw err;
+        }
+      };
+
+      const handleSelectLayer = (id: string) => {
+        try {
+          currentState = selectLayer(currentState, id);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleUpdateLayer = (id: string, patch: LayerPatch) => {
+        try {
+          currentState = updateLayer(currentState, id, patch);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleMoveLayer = (id: string, dir: 'up' | 'down') => {
+        try {
+          currentState = moveLayer(currentState, id, dir);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleDeleteLayer = (id: string) => {
+        try {
+          const { state: nextState, removedImageId } = removeLayer(currentState, id);
+          currentState = nextState;
+          if (removedImageId) {
+            images.delete(removedImageId);
+            void store.removeImage(removedImageId).catch((err) => {
+              console.warn('[pixel-overlay]', err);
+            });
+          }
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleSetBlend = (blend: Blend) => {
+        try {
+          currentState = setBlend(currentState, blend);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleSetInvert = (invert: boolean) => {
+        try {
+          currentState = setInvert(currentState, invert);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleSetAllHidden = (hidden: boolean) => {
+        try {
+          currentState = setAllHidden(currentState, hidden);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleSetCollapsed = (collapsed: boolean) => {
+        try {
+          currentState = setPanel(currentState, { collapsed });
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleClose = () => {
+        try {
+          currentState = setShown(currentState, false);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleSavePanelPosition = (x: number, y: number) => {
+        try {
+          currentState = setPanel(currentState, { x, y });
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
+      const handleAlign = (id: string, how: 'center' | 'fit-width') => {
+        try {
+          const layer = currentState.layers.find((l) => l.id === id);
+          if (!layer) return;
+          const cw = document.documentElement.clientWidth;
+          if (how === 'center') {
+            currentState = updateLayer(currentState, id, { x: centerX(layer, cw) });
+          } else if (how === 'fit-width') {
+            const { scale, x } = fitWidth(layer, cw);
+            currentState = updateLayer(currentState, id, { scale, x });
+          }
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
       const renderAll = () => {
         try {
           layersView.render(currentState, images);
@@ -118,171 +315,42 @@ export default defineContentScript({
               panelView = mountPanel({
                 doc: document,
                 area,
-                async onAddLayer(newLayer, dataUrl) {
-                  try {
-                    await store.putImage(newLayer.imageId, dataUrl);
-                    images.set(newLayer.imageId, dataUrl);
-                    currentState = addLayer(currentState, newLayer);
-                    renderAll();
-                    await store.save(currentState);
-                    panelError = '';
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                    images.delete(newLayer.imageId);
-                    try {
-                      await store.removeImage(newLayer.imageId);
-                    } catch (rmErr) {
-                      console.warn('[pixel-overlay]', rmErr);
-                    }
-                    try {
-                      currentState = await store.load();
-                      await loadImagesForLayers(currentState.layers);
-                    } catch (loadErr) {
-                      console.warn('[pixel-overlay]', loadErr);
-                    }
-                    const msg = err instanceof Error ? err.message : String(err);
-                    panelError = `Could not save: ${msg}`;
-                    renderAll();
-                    throw err;
-                  }
-                },
-                async onImportLayers(imported) {
-                  const appended = appendImported(currentState, imported, newId);
-                  try {
-                    for (const [id, dataUrl] of Object.entries(appended.images)) {
-                      await store.putImage(id, dataUrl);
-                      images.set(id, dataUrl);
-                    }
-                    currentState = appended.state;
-                    renderAll();
-                    await store.save(currentState);
-                    panelError = '';
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                    for (const id of Object.keys(appended.images)) {
-                      images.delete(id);
-                      try {
-                        await store.removeImage(id);
-                      } catch (rmErr) {
-                        console.warn('[pixel-overlay]', rmErr);
-                      }
-                    }
-                    try {
-                      currentState = await store.load();
-                      await loadImagesForLayers(currentState.layers);
-                    } catch (loadErr) {
-                      console.warn('[pixel-overlay]', loadErr);
-                    }
-                    const msg = err instanceof Error ? err.message : String(err);
-                    panelError = `Could not save: ${msg}`;
-                    renderAll();
-                    throw err;
-                  }
-                },
-                onSelectLayer(id) {
-                  try {
-                    currentState = selectLayer(currentState, id);
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onUpdateLayer(id, patch) {
-                  try {
-                    currentState = updateLayer(currentState, id, patch);
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onMoveLayer(id, dir) {
-                  try {
-                    currentState = moveLayer(currentState, id, dir);
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onDeleteLayer(id) {
-                  try {
-                    const { state: nextState, removedImageId } = removeLayer(currentState, id);
-                    currentState = nextState;
-                    if (removedImageId) {
-                      images.delete(removedImageId);
-                      void store.removeImage(removedImageId).catch((err) => {
-                        console.warn('[pixel-overlay]', err);
-                      });
-                    }
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onSetBlend(blend) {
-                  try {
-                    currentState = setBlend(currentState, blend);
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onSetInvert(invert) {
-                  try {
-                    currentState = setInvert(currentState, invert);
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onSetAllHidden(hidden) {
-                  try {
-                    currentState = setAllHidden(currentState, hidden);
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onSetCollapsed(collapsed) {
-                  try {
-                    currentState = setPanel(currentState, { collapsed });
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onClose() {
-                  try {
-                    currentState = setShown(currentState, false);
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
-                onSavePanelPosition(x, y) {
-                  try {
-                    currentState = setPanel(currentState, { x, y });
-                    renderAll();
-                    void saveState();
-                  } catch (err) {
-                    console.warn('[pixel-overlay]', err);
-                  }
-                },
+                onAddLayer: handleAddLayer,
+                onImportLayers: handleImportLayers,
+                onSelectLayer: handleSelectLayer,
+                onUpdateLayer: handleUpdateLayer,
+                onMoveLayer: handleMoveLayer,
+                onDeleteLayer: handleDeleteLayer,
+                onSetBlend: handleSetBlend,
+                onSetInvert: handleSetInvert,
+                onSetAllHidden: handleSetAllHidden,
+                onSetCollapsed: handleSetCollapsed,
+                onClose: handleClose,
+                onSavePanelPosition: handleSavePanelPosition,
+                onAlign: handleAlign,
               });
             }
             panelView.render(currentState, images, panelError);
+            if (connectedPorts.size > 0) {
+              panelView.setHidden(true);
+            }
           } else {
             if (panelView) {
               panelView.destroy();
               panelView = null;
+            }
+          }
+
+          const update: SideUpdate = {
+            type: 'state',
+            site,
+            state: currentState,
+          };
+          for (const port of connectedPorts) {
+            try {
+              port.postMessage(update);
+            } catch (err) {
+              console.warn('[pixel-overlay]', err);
             }
           }
         } catch (err) {
@@ -336,6 +404,84 @@ export default defineContentScript({
               console.warn('[pixel-overlay]', err);
             }
           })();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      });
+
+      browser.runtime.onConnect.addListener((port) => {
+        try {
+          if (port.name !== SIDE_PORT) return;
+
+          connectedPorts.add(port);
+          if (panelView) {
+            panelView.setHidden(true);
+          }
+
+          try {
+            port.postMessage({
+              type: 'state',
+              site,
+              state: currentState,
+            } satisfies SideUpdate);
+          } catch (err) {
+            console.warn('[pixel-overlay]', err);
+          }
+
+          port.onDisconnect.addListener(() => {
+            connectedPorts.delete(port);
+            if (connectedPorts.size === 0 && currentState.shown && panelView) {
+              panelView.setHidden(false);
+            }
+          });
+
+          port.onMessage.addListener((msg: unknown) => {
+            try {
+              if (!isPanelOp(msg)) return;
+              switch (msg.op) {
+                case 'add':
+                  void handleAddLayer(msg.newLayer, msg.dataUrl).catch((err) => {
+                    console.warn('[pixel-overlay]', err);
+                  });
+                  break;
+                case 'select':
+                  handleSelectLayer(msg.id);
+                  break;
+                case 'update':
+                  handleUpdateLayer(msg.id, msg.patch);
+                  break;
+                case 'move':
+                  handleMoveLayer(msg.id, msg.dir);
+                  break;
+                case 'delete':
+                  handleDeleteLayer(msg.id);
+                  break;
+                case 'blend':
+                  handleSetBlend(msg.blend);
+                  break;
+                case 'invert':
+                  handleSetInvert(msg.on);
+                  break;
+                case 'hide-all':
+                  handleSetAllHidden(msg.on);
+                  break;
+                case 'align':
+                  handleAlign(msg.id, msg.how);
+                  break;
+                case 'import': {
+                  const res = parseImport(msg.file);
+                  if (!('error' in res)) {
+                    void handleImportLayers(res).catch((err) => {
+                      console.warn('[pixel-overlay]', err);
+                    });
+                  }
+                  break;
+                }
+              }
+            } catch (err) {
+              console.warn('[pixel-overlay]', err);
+            }
+          });
         } catch (err) {
           console.warn('[pixel-overlay]', err);
         }

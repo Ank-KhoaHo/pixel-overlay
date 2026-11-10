@@ -19,7 +19,14 @@ export default defineConfig({
     name: 'Pixel Veil',
     description:
       'Lay design images over a live page and check it pixel by pixel. Unlimited layers, free.',
-    permissions: ['activeTab', 'scripting', 'storage', 'unlimitedStorage'],
+    // A10: Chrome's side panel. Firefox gets a sidebar_action from the same page, no permission.
+    permissions: [
+      'activeTab',
+      'scripting',
+      'storage',
+      'unlimitedStorage',
+      ...(browser === 'firefox' ? [] : ['sidePanel']),
+    ],
     optional_host_permissions: ['<all_urls>'],
     ...(mode === 'e2e' ? { host_permissions: ['http://localhost/*', 'file:///*'] } : {}),
     action: { default_title: 'Pixel Veil' },
