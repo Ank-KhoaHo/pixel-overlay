@@ -37,7 +37,9 @@ async function turnKeepOn() {
   expect(g.url()).toContain(`chrome-extension://${s.extensionId}/grant.html`);
   await expect(g.locator('body')).toContainText(s.fixture.origin);
   await g.locator('[data-po="grant"]').click();
-  await g.waitForEvent('close');
+  // Under load the window can close before click() returns; then a 'close' wait never fires
+  // (2 of 16 probe runs, 2026-11-10). No await sits between the check and the wait.
+  if (!g.isClosed()) await g.waitForEvent('close');
 }
 
 test('before keep: a reload hides the layers until the icon is clicked', async () => {
