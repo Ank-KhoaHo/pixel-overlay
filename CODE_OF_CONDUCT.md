@@ -39,18 +39,24 @@ spaces.
 
 ## Reporting
 
-Report unacceptable behaviour to **hello@wanksolution.com**. All reports will be reviewed and
-investigated promptly and fairly, and the identity of the reporter will be kept confidential.
+Report unacceptable behaviour to **hello@wanksolution.com**. One person maintains this project and
+reads every report personally. Your name stays private: it is not shared with the person you
+report. No fixed response time is promised; you get a reply once the report is read.
 
 ## Enforcement
 
-Project maintainers are responsible for clarifying and enforcing these standards, and will take
-appropriate and fair corrective action in response to any behaviour they deem inappropriate,
-threatening, offensive or harmful.
+The maintainer decides, after reading what happened. The steps, from mild to strong:
 
-Maintainers have the right and responsibility to remove, edit or reject comments, commits,
-code, issues and other contributions that are not aligned to this Code of Conduct, and will
-communicate reasons for moderation decisions when appropriate.
+1. **A private note** saying what was wrong.
+2. **Removing or editing** the comment, issue or pull request.
+3. **A block** from the repository, for a set time or for good.
+
+A serious case, such as threats or harassment, can go straight to step 3. The maintainer says
+why when it is safe to do so.
+
+If the report is about the maintainer, write to the same address and say so in the subject. With
+one maintainer there is no one else to hand it to, so you get a written reply, which you are free
+to share.
 
 ## Attribution
 

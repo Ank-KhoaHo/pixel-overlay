@@ -47,3 +47,6 @@ Thumbs.db
 /AGENTS.md
 /QUESTIONS.md
 .check/
+
+# Local-only extra patterns for scripts/check_leaks.py (see its header).
+/.leak-patterns.local

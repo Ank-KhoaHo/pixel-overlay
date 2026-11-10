@@ -26,6 +26,31 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# This project's own nouns (D4) live in a GITIGNORED file, never in this one:
+# this script is tracked in a public repository, so a list of private names
+# written here would publish exactly what it exists to keep out. One regex per
+# line; blank lines and lines starting with `#` are skipped. Each line stays its
+# own pattern, so a finding names the one noun that matched.
+LOCAL_PATTERNS_FILE = ROOT / ".leak-patterns.local"
+
+
+def load_local_patterns(path: Path) -> list[str]:
+    """Read one regex per line. A line that does not compile stops the scan:
+    a broken pattern that silently matched nothing would read as clean."""
+    if not path.is_file():
+        return []
+    out = []
+    for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            re.compile(line)
+        except re.error as e:
+            raise ValueError(f"{path.name} line {n}: bad regex ({e})") from e
+        out.append(line)
+    return out
+
 # Generic, ship-with defaults. See D4 -- add this project's own nouns.
 PATTERNS = [
     # Shape: a credential noun glued to a value being handed over -- a colon
@@ -146,6 +171,12 @@ def _hits(text: str, patterns: list[str], label: str) -> list[str]:
 
 def main() -> int:
     findings = []
+    try:
+        local = load_local_patterns(LOCAL_PATTERNS_FILE)
+    except ValueError as e:
+        print(f"check_leaks: {e} -- fix it before pushing")
+        return 2
+    patterns = PATTERNS + local
     # scripts/check_leaks.py is excluded from its own scan on purpose:
     # PATTERNS above has to spell out the literal words it hunts for
     # (password, secret, sk-..., ghp_..., BEGIN PRIVATE KEY), so staging an
@@ -162,7 +193,7 @@ def main() -> int:
     # it did.
     findings += _hits(
         _run("git", "diff", "--cached", "--", ".", ":(exclude)scripts/check_leaks.py"),
-        PATTERNS + GITIGNORE_INVENTORY, "staged diff")
+        patterns + GITIGNORE_INVENTORY, "staged diff")
     # PATTERNS + GITIGNORE_INVENTORY here too, not PATTERNS alone: this scan's own
     # module docstring defines surface 2 as "a subject summarising what you just
     # hid" -- an inventory shape ("hide docs/, which holds 42 tickets and the
@@ -174,9 +205,9 @@ def main() -> int:
     # definition.
     findings += _hits(_run("git", "log", "--branches", "--not", "--remotes",
                            "--format=%s%n%b"),
-                      PATTERNS + GITIGNORE_INVENTORY, "unpushed commit message")
+                      patterns + GITIGNORE_INVENTORY, "unpushed commit message")
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
-    findings += _hits(gitignore, PATTERNS + GITIGNORE_INVENTORY, ".gitignore")
+    findings += _hits(gitignore, patterns + GITIGNORE_INVENTORY, ".gitignore")
 
     if findings:
         print("POSSIBLE LEAK -- do not push until each is explained:")
@@ -184,7 +215,12 @@ def main() -> int:
             print("  " + f)
         return 1
     print("check_leaks: staged diff, unpushed commit messages and .gitignore are clean")
-    print("  (PATTERNS holds only generic credential terms -- see ticket D4)")
+    if local:
+        print(f"  ({len(PATTERNS)} credential patterns + {len(local)} project patterns "
+              f"from {LOCAL_PATTERNS_FILE.name})")
+    else:
+        print(f"  WARNING: no {LOCAL_PATTERNS_FILE.name}, so only credential shapes were "
+              "checked, not this project's private names (ticket D4)")
     return 0
 
 
