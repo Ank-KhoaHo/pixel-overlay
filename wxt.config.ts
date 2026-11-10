@@ -10,6 +10,10 @@ import { defineConfig } from 'wxt';
 // carry neither.
 export default defineConfig({
   srcDir: 'src',
+  // WXT's own sources zip (for Firefox review) packs the whole folder, gitignored files
+  // included, and this repo keeps its working notes gitignored. `npm run zip:sources` uses
+  // `git archive` instead, which can only contain tracked (already public) files.
+  zip: { zipSources: false },
   modules: ['@wxt-dev/module-react'],
   manifest: ({ mode, browser }) => ({
     name: 'Pixel Overlay',
