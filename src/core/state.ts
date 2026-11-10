@@ -129,6 +129,10 @@ export function parseSiteState(raw: unknown): SiteState | null {
       scale: l.scale,
       visible: l.visible,
       locked: l.locked,
+      fixed:
+        typeof (l as unknown as Record<string, unknown>).fixed === 'boolean'
+          ? ((l as unknown as Record<string, unknown>).fixed as boolean)
+          : false,
     })),
     activeLayerId: s.activeLayerId,
     blend,
@@ -156,6 +160,7 @@ export function addLayer(s: SiteState, l: NewLayer): SiteState {
     scale: 1,
     visible: true,
     locked: false,
+    fixed: false,
   };
   return {
     ...s,
@@ -272,6 +277,11 @@ export function updateLayer(s: SiteState, id: string, patch: LayerPatch): SiteSt
     nextLocked = Boolean(patch.locked);
   }
 
+  let nextFixed = layer.fixed;
+  if (patch.fixed !== undefined) {
+    nextFixed = Boolean(patch.fixed);
+  }
+
   if (
     nextOpacity === layer.opacity &&
     nextScale === layer.scale &&
@@ -279,7 +289,8 @@ export function updateLayer(s: SiteState, id: string, patch: LayerPatch): SiteSt
     nextY === layer.y &&
     nextName === layer.name &&
     nextVisible === layer.visible &&
-    nextLocked === layer.locked
+    nextLocked === layer.locked &&
+    nextFixed === layer.fixed
   ) {
     return s;
   }
@@ -293,6 +304,7 @@ export function updateLayer(s: SiteState, id: string, patch: LayerPatch): SiteSt
     name: nextName,
     visible: nextVisible,
     locked: nextLocked,
+    fixed: nextFixed,
   };
 
   return {

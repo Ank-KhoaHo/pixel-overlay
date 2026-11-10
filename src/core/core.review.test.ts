@@ -82,6 +82,7 @@ describe('addLayer', () => {
       scale: 1,
       visible: true,
       locked: false,
+      fixed: false,
     });
   });
 

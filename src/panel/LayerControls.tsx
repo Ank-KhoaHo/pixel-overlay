@@ -222,6 +222,18 @@ export function LayerControls({ layer, onUpdateLayer }: LayerControlsProps) {
           {layer.locked ? 'Locked' : 'Unlocked'}
         </button>
       </div>
+
+      <div className="control-row">
+        <span className="control-label">Pin</span>
+        <button
+          type="button"
+          data-po="fixed"
+          aria-pressed={layer.fixed ? 'true' : 'false'}
+          onClick={() => onUpdateLayer(layer.id, { fixed: !layer.fixed })}
+        >
+          Fixed to window
+        </button>
+      </div>
     </div>
   );
 }

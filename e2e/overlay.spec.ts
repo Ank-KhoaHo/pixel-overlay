@@ -29,6 +29,7 @@ test('two layers are drawn in array order with the top layer last in the DOM', a
         scale: 1,
         visible: true,
         locked: false,
+        fixed: false,
       },
       {
         id: 'L2',
@@ -42,6 +43,7 @@ test('two layers are drawn in array order with the top layer last in the DOM', a
         scale: 1,
         visible: true,
         locked: false,
+        fixed: false,
       },
     ],
     activeLayerId: 'L2',
@@ -84,6 +86,7 @@ test('hiding one layer leaves only the visible layer in the DOM', async () => {
         scale: 1,
         visible: true,
         locked: false,
+        fixed: false,
       },
       {
         id: 'L2',
@@ -97,6 +100,7 @@ test('hiding one layer leaves only the visible layer in the DOM', async () => {
         scale: 1,
         visible: false,
         locked: false,
+        fixed: false,
       },
     ],
     activeLayerId: 'L1',

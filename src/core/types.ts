@@ -10,6 +10,7 @@ export interface Layer {
   scale: number;
   visible: boolean;
   locked: boolean;
+  fixed: boolean;
 }
 
 export type Blend = 'normal' | 'difference' | 'multiply' | 'screen';
@@ -26,7 +27,7 @@ export interface SiteState {
 }
 
 export type LayerPatch = Partial<
-  Pick<Layer, 'name' | 'x' | 'y' | 'opacity' | 'scale' | 'visible' | 'locked'>
+  Pick<Layer, 'name' | 'x' | 'y' | 'opacity' | 'scale' | 'visible' | 'locked' | 'fixed'>
 >;
 
 export interface NewLayer {
@@ -58,6 +59,7 @@ export const ACCEPTED_IMAGE_TYPES = [
 export type AcceptedImageType = (typeof ACCEPTED_IMAGE_TYPES)[number];
 
 export const HOST_LAYERS_TAG = 'pixel-overlay-layers';
+export const HOST_FIXED_TAG = 'pixel-overlay-fixed';
 export const HOST_PANEL_TAG = 'pixel-overlay-panel';
 export const Z_INDEX_LAYERS = 2147483646;
 export const Z_INDEX_PANEL = 2147483647;

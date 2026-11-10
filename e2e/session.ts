@@ -122,6 +122,7 @@ export function oneLayerState(over: Partial<SiteState['layers'][number]> = {}, b
         scale: 1,
         visible: true,
         locked: false,
+        fixed: false,
         ...over,
       },
     ],

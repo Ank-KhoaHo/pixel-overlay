@@ -25,8 +25,23 @@ export function mountLayers(opts: {
   `;
   shadow.appendChild(styleEl);
 
-  function applyHostStyles(el: HTMLElement, blend: Blend) {
-    el.style.setProperty('position', 'absolute', 'important');
+  const fixedHost = opts.doc.createElement('pixel-overlay-fixed');
+  const fixedShadow = fixedHost.attachShadow({ mode: shadow.mode });
+
+  const fixedStyleEl = opts.doc.createElement('style');
+  fixedStyleEl.textContent = `
+    :host {
+      all: initial;
+    }
+  `;
+  fixedShadow.appendChild(fixedStyleEl);
+
+  function applyHostStyles(
+    el: HTMLElement,
+    blend: Blend,
+    position: 'absolute' | 'fixed',
+  ) {
+    el.style.setProperty('position', position, 'important');
     el.style.setProperty('left', '0', 'important');
     el.style.setProperty('top', '0', 'important');
     el.style.setProperty('width', '0', 'important');
@@ -41,15 +56,24 @@ export function mountLayers(opts: {
     el.style.setProperty('mix-blend-mode', blend, 'important');
   }
 
-  applyHostStyles(host, 'normal');
+  applyHostStyles(host, 'normal', 'absolute');
+  applyHostStyles(fixedHost, 'normal', 'fixed');
 
-  if (opts.doc.documentElement) {
-    opts.doc.documentElement.appendChild(host);
-  } else if (opts.doc.body) {
-    opts.doc.body.appendChild(host);
-  } else {
-    opts.doc.appendChild(host);
+  function attachHosts() {
+    const root = opts.doc.documentElement ?? opts.doc.body ?? opts.doc;
+    if (!host.isConnected) {
+      root.appendChild(host);
+    }
+    if (!fixedHost.isConnected || fixedHost.previousSibling !== host) {
+      if (host.parentNode) {
+        host.parentNode.insertBefore(fixedHost, host.nextSibling);
+      } else {
+        root.appendChild(fixedHost);
+      }
+    }
   }
+
+  attachHosts();
 
   const imageElements = new Map<string, HTMLImageElement>();
   const renderedImageIds = new Map<string, string>();
@@ -211,6 +235,7 @@ export function mountLayers(opts: {
         } else if (
           tag.includes('-') &&
           tag !== 'pixel-overlay-layers' &&
+          tag !== 'pixel-overlay-fixed' &&
           tag !== 'pixel-overlay-panel'
         ) {
           inEditable = true;
@@ -292,12 +317,11 @@ export function mountLayers(opts: {
   return {
     render(s: SiteState, images: Map<string, string>) {
       try {
-        if (!host.isConnected) {
-          opts.doc.documentElement?.appendChild(host);
-        }
+        attachHosts();
         updateScroller();
         currentState = s;
-        applyHostStyles(host, s.blend);
+        applyHostStyles(host, s.blend, 'absolute');
+        applyHostStyles(fixedHost, s.blend, 'fixed');
 
         const currentLayerIds = new Set(s.layers.map((l) => l.id));
         for (const [id, img] of imageElements.entries()) {
@@ -340,7 +364,8 @@ export function mountLayers(opts: {
           const isDragging = activeDraggingId === layer.id;
           applyImageStyles(img, layer, isActiveUnlocked, isDragging, s.invert);
 
-          shadow.appendChild(img);
+          const targetShadow = layer.fixed ? fixedShadow : shadow;
+          targetShadow.appendChild(img);
         }
       } catch (err) {
         console.warn('[pixel-overlay]', err);
@@ -356,6 +381,7 @@ export function mountLayers(opts: {
           listeningBody = null;
         }
         host.remove();
+        fixedHost.remove();
         imageElements.clear();
         renderedImageIds.clear();
       } catch (err) {
