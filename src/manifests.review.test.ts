@@ -37,7 +37,7 @@ describe('Firefox store build (.output/firefox-mv3)', () => {
   });
 
   it('keeps the icon click and the grant page', () => {
-    expect(m.action?.default_title).toBe('Pixel Overlay');
+    expect(m.action?.default_title).toBe('Pixel Veil');
     expect(existsSync('.output/firefox-mv3/grant.html')).toBe(true);
     expect(existsSync('.output/firefox-mv3/content-scripts/overlay.js')).toBe(true);
   });

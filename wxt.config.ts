@@ -16,13 +16,13 @@ export default defineConfig({
   zip: { zipSources: false },
   modules: ['@wxt-dev/module-react'],
   manifest: ({ mode, browser }) => ({
-    name: 'Pixel Overlay',
+    name: 'Pixel Veil',
     description:
       'Lay design images over a live page and check it pixel by pixel. Unlimited layers, free.',
     permissions: ['activeTab', 'scripting', 'storage', 'unlimitedStorage'],
     optional_host_permissions: ['<all_urls>'],
     ...(mode === 'e2e' ? { host_permissions: ['http://localhost/*'] } : {}),
-    action: { default_title: 'Pixel Overlay' },
+    action: { default_title: 'Pixel Veil' },
     ...(browser === 'firefox'
       ? {
           browser_specific_settings: {

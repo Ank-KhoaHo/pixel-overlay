@@ -1,12 +1,16 @@
-# pixel-overlay
+# Pixel Veil
+
+<img src="art/icon.svg" width="64" height="64" alt="">
 
 Lay design images over a live page in Chrome and check it pixel by pixel. Unlimited layers, free.
+
+The repository keeps its first working name, `pixel-overlay`.
 
 ## What this is
 
 A Chrome extension for front-end developers who build pages from a design export. Export the
 design as an image (a Figma frame as PNG, for example), open the page you built, click the
-**Pixel Overlay** icon and drop the image on the panel. The design sits over the page, and you
+**Pixel Veil** icon and drop the image on the panel. The design sits over the page, and you
 can see where the two disagree.
 
 - **Any number of layers**, kept per site: desktop, tablet and mobile designs side by side.
@@ -17,12 +21,12 @@ can see where the two disagree.
 - **Difference view**: matching pixels turn black, so every mismatch stands out.
 - **Keep on this site**: layers come back by themselves after a reload.
 
-Your images and settings stay in your browser (`chrome.storage.local`). Pixel Overlay sends
+Your images and settings stay in your browser (`chrome.storage.local`). Pixel Veil sends
 nothing anywhere and has no account.
 
 ## Use it
 
-Pixel Overlay is not on the Chrome Web Store yet. To run it from source:
+Pixel Veil is not on the Chrome Web Store yet. To run it from source:
 
 ```
 npm ci
@@ -32,7 +36,7 @@ npm run build
 Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and pick
 `.output/chrome-mv3`.
 
-1. Open your page and click the **Pixel Overlay** toolbar icon. A panel appears at the top right.
+1. Open your page and click the **Pixel Veil** toolbar icon. A panel appears at the top right.
 2. Click **Add image**, drop image files on the panel, or paste one with Ctrl+V.
 3. Move the layer into place, then set its see-through level, or switch the view to
    **Difference**.
@@ -42,7 +46,7 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 
 ## Permissions
 
-At install Pixel Overlay asks for no access to any site. A click on its icon lets it draw on
+At install Pixel Veil asks for no access to any site. A click on its icon lets it draw on
 that one tab (Chrome's `activeTab`). **Keep on this site** asks Chrome for that one site only,
 and switching it off gives the permission back.
 
@@ -65,6 +69,7 @@ and switching it off gives the permission back.
 | [SECURITY.md](SECURITY.md) | how to report a vulnerability, and what is not one |
 | [ROADMAP.md](ROADMAP.md) | direction, and the things deliberately not coming |
 | [LICENSE](LICENSE) | what you may do with this |
+| [art/icon.svg](art/icon.svg) | the icon; `node scripts/make_icons.mjs` renders the PNGs in `public/icon/` |
 
 ## Status
 

@@ -10,7 +10,7 @@ test('the test build loads and its worker starts', async () => {
   try {
     expect(extensionId).toMatch(/^[a-p]{32}$/);
     const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
-    expect(manifest.name).toBe('Pixel Overlay');
+    expect(manifest.name).toBe('Pixel Veil');
     expect(manifest.host_permissions).toEqual(['http://localhost/*']);
     expect(manifest.permissions).toEqual(['activeTab', 'scripting', 'storage', 'unlimitedStorage']);
   } finally {

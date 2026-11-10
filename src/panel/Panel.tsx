@@ -271,7 +271,7 @@ export function Panel({
         onPointerCancel={handleHeaderPointerUp}
       >
         <span data-po="title" className="panel-title">
-          Pixel Overlay
+          Pixel Veil
         </span>
         <div className="panel-header-buttons">
           <button

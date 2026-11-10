@@ -18,7 +18,7 @@ function init() {
 
   const title = document.createElement('span');
   title.className = 'header-title';
-  title.textContent = 'Pixel Overlay';
+  title.textContent = 'Pixel Veil';
 
   header.appendChild(icon);
   header.appendChild(title);
@@ -34,7 +34,7 @@ function init() {
   }
 
   const desc = document.createElement('p');
-  desc.textContent = `Let Pixel Overlay restore your layers on ${origin} after a reload.`;
+  desc.textContent = `Let Pixel Veil restore your layers on ${origin} after a reload.`;
   app.appendChild(desc);
 
   const button = document.createElement('button');
