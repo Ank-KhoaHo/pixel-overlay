@@ -1,3 +1,4 @@
+import { applyCommand } from '../core/commands';
 import { isMessage } from '../core/messages';
 import {
   addLayer,
@@ -312,21 +313,26 @@ export default defineContentScript({
               sendResponse?.({ ok: true });
               return Promise.resolve({ ok: true });
             }
-            void (async () => {
+            return (async () => {
               try {
                 await initialLoadPromise;
                 if (msg.type === 'po/show') {
                   currentState = setShown(currentState, true);
                   renderAll();
-                  void saveState();
+                  await saveState();
                 } else if (msg.type === 'po/toggle') {
                   currentState = setShown(currentState, !currentState.shown);
                   renderAll();
-                  void saveState();
+                  await saveState();
+                } else if (msg.type === 'po/command') {
+                  currentState = applyCommand(currentState, msg.name);
+                  renderAll();
+                  await saveState();
                 }
               } catch (err) {
                 console.warn('[pixel-overlay]', err);
               }
+              sendResponse?.({ ok: true });
             })();
           } catch (err) {
             console.warn('[pixel-overlay]', err);

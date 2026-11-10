@@ -44,6 +44,15 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
    the small window that opens. Chrome asks once per site.
 5. Click the icon again to hide everything.
 
+Keyboard shortcuts (change them in `chrome://extensions/shortcuts`):
+
+| Keys | Does |
+|---|---|
+| Alt+Shift+V | Show or hide Pixel Veil, like the icon |
+| Alt+Shift+H | Hide or show all layers |
+| Alt+Shift+. and Alt+Shift+, | Active layer 10 % more solid, or 10 % more see-through |
+| (none set) | Turn Difference view on or off; pick your own keys |
+
 ## Permissions
 
 At install Pixel Veil asks for no access to any site. A click on its icon lets it draw on

@@ -23,6 +23,24 @@ export default defineConfig({
     optional_host_permissions: ['<all_urls>'],
     ...(mode === 'e2e' ? { host_permissions: ['http://localhost/*'] } : {}),
     action: { default_title: 'Pixel Veil' },
+    // A7. Chrome takes at most 4 suggested keys; users rebind all of them in
+    // chrome://extensions/shortcuts. toggle-difference ships without a key.
+    commands: {
+      _execute_action: { suggested_key: { default: 'Alt+Shift+V' } },
+      'toggle-hide-all': {
+        suggested_key: { default: 'Alt+Shift+H' },
+        description: 'Hide or show all layers',
+      },
+      'opacity-up': {
+        suggested_key: { default: 'Alt+Shift+Period' },
+        description: 'Make the active layer 10 % more solid',
+      },
+      'opacity-down': {
+        suggested_key: { default: 'Alt+Shift+Comma' },
+        description: 'Make the active layer 10 % more see-through',
+      },
+      'toggle-difference': { description: 'Turn Difference view on or off' },
+    },
     ...(browser === 'firefox'
       ? {
           browser_specific_settings: {

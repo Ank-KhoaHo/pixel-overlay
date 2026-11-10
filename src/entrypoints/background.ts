@@ -1,3 +1,4 @@
+import { COMMANDS, type CommandName } from '../core/commands';
 import { isMessage } from '../core/messages';
 import { originOf } from '../core/site';
 import { chromeLocalArea } from '../shared/store';
@@ -32,8 +33,59 @@ export async function clickTab(tabId: number): Promise<void> {
   }
 }
 
+export async function runCommand(name: string, tabId?: number): Promise<void> {
+  try {
+    if (!(COMMANDS as readonly string[]).includes(name)) {
+      return;
+    }
+    let targetTabId = tabId;
+    if (targetTabId === undefined) {
+      try {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        targetTabId = tabs[0]?.id;
+        if (targetTabId === undefined) {
+          const lastFocusedTabs = await browser.tabs.query({
+            active: true,
+            lastFocusedWindow: true,
+          });
+          targetTabId = lastFocusedTabs[0]?.id;
+        }
+      } catch {
+        return;
+      }
+    }
+    if (targetTabId === undefined) {
+      return;
+    }
+
+    let isLive = false;
+    try {
+      const reply = (await browser.tabs.sendMessage(targetTabId, { type: 'po/ping' })) as
+        | { ok?: boolean }
+        | undefined;
+      if (reply && typeof reply === 'object' && reply.ok === true) {
+        isLive = true;
+      }
+    } catch {
+      isLive = false;
+    }
+
+    if (!isLive) {
+      return;
+    }
+
+    await browser.tabs.sendMessage(targetTabId, {
+      type: 'po/command',
+      name: name as CommandName,
+    });
+  } catch (e) {
+    console.warn('[pixel-overlay]', e);
+  }
+}
+
 if (import.meta.env.MODE === 'e2e' || import.meta.env.PO_E2E) {
   (self as unknown as { poClick: typeof clickTab }).poClick = clickTab;
+  (self as unknown as { poCommand: typeof runCommand }).poCommand = runCommand;
 }
 
 function createKeptDeps(): KeptDeps {
@@ -96,6 +148,12 @@ export default defineBackground(() => {
   browser.action.onClicked.addListener(async (tab) => {
     if (tab.id === undefined) return;
     await clickTab(tab.id);
+  });
+
+  browser.commands.onCommand.addListener((name, tab) => {
+    void runCommand(name, tab?.id).catch((err) => {
+      console.warn('[pixel-overlay]', err);
+    });
   });
 
   browser.runtime.onMessage.addListener((msg: unknown) => {
