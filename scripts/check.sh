@@ -17,6 +17,13 @@ if grep -q '"host_permissions"' .output/chrome-mv3/manifest.json; then
 fi
 npm run --silent build:e2e > .check/build-e2e.out
 
+step "Firefox build, then Mozilla's linter (the validator AMO runs)"
+npm run --silent build:firefox > .check/build-firefox.out
+if grep -q '"host_permissions"' .output/firefox-mv3/manifest.json; then
+  echo "FAIL: the Firefox build has host_permissions"; exit 1
+fi
+npx web-ext lint --source-dir .output/firefox-mv3 2>&1 | tee .check/webext-lint.out
+
 step "unit (vitest)"
 npx vitest run 2>&1 | tee .check/vitest.out
 if grep -qiE '[0-9]+ (skipped|todo)' .check/vitest.out; then

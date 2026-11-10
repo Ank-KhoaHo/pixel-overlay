@@ -53,7 +53,8 @@ and switching it off gives the permission back.
   same site share one list. Hide the layers you are not using.
 - Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
 - On the rare page that sets a CSS `transform` on `<html>`, the panel scrolls with the page.
-- Only Chrome (and Chromium browsers) for now.
+- Built for Chrome and Chromium browsers. A Firefox build exists (`npm run build:firefox`,
+  Firefox 140 or later) but is not on Firefox Add-ons yet.
 
 ## Where things live
 

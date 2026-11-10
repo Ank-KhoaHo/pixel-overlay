@@ -94,6 +94,37 @@ export async function syncRegistration(d: KeptDeps): Promise<void> {
   return next;
 }
 
+async function doReconcileKept(d: KeptDeps): Promise<void> {
+  const origins = await keptOrigins(d);
+  const remaining: string[] = [];
+  let changed = false;
+  for (const origin of origins) {
+    let hasPerm = false;
+    try {
+      hasPerm = await d.permissions.contains({ origins: [`${origin}/*`] });
+    } catch {
+      hasPerm = true;
+    }
+    if (hasPerm) {
+      remaining.push(origin);
+    } else {
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    await d.area.set({ [KEPT_KEY]: remaining });
+  }
+  await doSyncRegistration(d);
+}
+
+export async function reconcileKept(d: KeptDeps): Promise<void> {
+  const prev = queues.get(d) ?? Promise.resolve();
+  const next = prev.catch(() => {}).then(() => doReconcileKept(d));
+  queues.set(d, next);
+  return next;
+}
+
 export async function keep(d: KeptDeps, origin: string): Promise<void> {
   const origins = await keptOrigins(d);
   if (!origins.includes(origin)) {

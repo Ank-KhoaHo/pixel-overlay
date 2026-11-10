@@ -44,7 +44,7 @@ function init() {
 
   const note = document.createElement('p');
   note.className = 'note';
-  note.textContent = 'Chrome will ask you to confirm.';
+  note.textContent = 'Your browser will ask you to confirm.';
 
   const status = document.createElement('p');
   status.id = 'status';

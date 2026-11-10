@@ -5,10 +5,13 @@ import { defineConfig } from 'wxt';
 // (layers restored after reload) only after the user grants that one origin.
 // The e2e build (`wxt build --mode e2e`, output .output/chrome-mv3-e2e) adds localhost,
 // because Playwright cannot click Chrome's permission prompt. Never ship that build.
+// Firefox (`npm run build:firefox`, ticket A3) adds the gecko id that signing needs and declares
+// that the extension collects no data (required for new AMO listings); the Chrome manifests
+// carry neither.
 export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-react'],
-  manifest: ({ mode }) => ({
+  manifest: ({ mode, browser }) => ({
     name: 'Pixel Overlay',
     description:
       'Lay design images over a live page and check it pixel by pixel. Unlimited layers, free.',
@@ -16,5 +19,16 @@ export default defineConfig({
     optional_host_permissions: ['<all_urls>'],
     ...(mode === 'e2e' ? { host_permissions: ['http://localhost/*'] } : {}),
     action: { default_title: 'Pixel Overlay' },
+    ...(browser === 'firefox'
+      ? {
+          browser_specific_settings: {
+            gecko: {
+              id: 'pixel-overlay@wanksolution.com',
+              strict_min_version: '140.0',
+              data_collection_permissions: { required: ['none'] },
+            },
+          },
+        }
+      : {}),
   }),
 });

@@ -1,7 +1,7 @@
 import { isMessage } from '../core/messages';
 import { originOf } from '../core/site';
 import { chromeLocalArea } from '../shared/store';
-import { keep, syncRegistration, unkeep, type KeptDeps } from '../background/kept';
+import { keep, reconcileKept, syncRegistration, unkeep, type KeptDeps } from '../background/kept';
 
 export async function clickTab(tabId: number): Promise<void> {
   try {
@@ -76,6 +76,18 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onStartup.addListener(() => {
+    void syncRegistration(deps).catch((err) => {
+      console.warn('[pixel-overlay]', err);
+    });
+  });
+
+  browser.permissions.onRemoved.addListener(() => {
+    void reconcileKept(deps).catch((err) => {
+      console.warn('[pixel-overlay]', err);
+    });
+  });
+
+  browser.permissions.onAdded.addListener(() => {
     void syncRegistration(deps).catch((err) => {
       console.warn('[pixel-overlay]', err);
     });
