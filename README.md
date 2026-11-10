@@ -92,4 +92,4 @@ and switching it off gives the permission back.
 
 ## Status
 
-Version 0.1.0, before its first Store release. Licensed under MIT; see [LICENSE](LICENSE).
+Version 0.2.0, before its first Store release. Licensed under MIT; see [LICENSE](LICENSE).
