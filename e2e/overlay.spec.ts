@@ -30,6 +30,7 @@ test('two layers are drawn in array order with the top layer last in the DOM', a
         visible: true,
         locked: false,
         fixed: false,
+        group: '',
       },
       {
         id: 'L2',
@@ -44,6 +45,7 @@ test('two layers are drawn in array order with the top layer last in the DOM', a
         visible: true,
         locked: false,
         fixed: false,
+        group: '',
       },
     ],
     activeLayerId: 'L2',
@@ -51,6 +53,7 @@ test('two layers are drawn in array order with the top layer last in the DOM', a
     invert: false,
     shown: true,
     allHidden: false,
+    filter: '',
     panel: { x: -1, y: 16, collapsed: false },
   };
 
@@ -87,6 +90,7 @@ test('hiding one layer leaves only the visible layer in the DOM', async () => {
         visible: true,
         locked: false,
         fixed: false,
+        group: '',
       },
       {
         id: 'L2',
@@ -101,6 +105,7 @@ test('hiding one layer leaves only the visible layer in the DOM', async () => {
         visible: false,
         locked: false,
         fixed: false,
+        group: '',
       },
     ],
     activeLayerId: 'L1',
@@ -108,6 +113,7 @@ test('hiding one layer leaves only the visible layer in the DOM', async () => {
     invert: false,
     shown: true,
     allHidden: false,
+    filter: '',
     panel: { x: -1, y: 16, collapsed: false },
   };
 

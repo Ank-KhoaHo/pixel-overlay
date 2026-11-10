@@ -272,6 +272,12 @@ export function SidePanelApp() {
           on: hidden,
         } satisfies PanelOp);
       }}
+      onSetFilter={(filter) => {
+        portRef.current?.postMessage({
+          op: 'filter',
+          filter,
+        } satisfies PanelOp);
+      }}
       onAlign={(id, how) => {
         portRef.current?.postMessage({
           op: 'align',

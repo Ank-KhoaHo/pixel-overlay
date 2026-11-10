@@ -1,5 +1,6 @@
 import type { Blend, Layer, SiteState } from '../core/types';
 import { snap } from '../core/align';
+import { inFilter } from '../core/state';
 import { keyToNudge } from '../core/keys';
 import { shadowModeFor } from './shadowMode';
 
@@ -255,7 +256,12 @@ export function mountLayers(opts: {
         const activeLayer = currentState.layers.find(
           (l) => l.id === currentState?.activeLayerId,
         );
-        if (activeLayer && !activeLayer.locked && activeLayer.visible) {
+        if (
+          activeLayer &&
+          !activeLayer.locked &&
+          activeLayer.visible &&
+          inFilter(currentState, activeLayer)
+        ) {
           e.preventDefault();
           opts.onNudge(nudge.dx, nudge.dy);
         }
@@ -340,7 +346,7 @@ export function mountLayers(opts: {
         }
 
         for (const layer of s.layers) {
-          if (!layer.visible) {
+          if (!layer.visible || !inFilter(s, layer)) {
             const existing = imageElements.get(layer.id);
             if (existing) {
               existing.remove();

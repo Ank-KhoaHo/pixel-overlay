@@ -22,6 +22,7 @@ export interface PanelMountOptions {
   onClose: () => void;
   onSavePanelPosition: (x: number, y: number) => void;
   onAlign: (id: string, how: 'center' | 'fit-width') => void;
+  onSetFilter: (filter: string) => void;
 }
 
 export interface PanelView {
@@ -124,6 +125,7 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
             onClose={opts.onClose}
             onSavePanelPosition={opts.onSavePanelPosition}
             onAlign={opts.onAlign}
+            onSetFilter={opts.onSetFilter}
           />,
         );
       } catch (err) {

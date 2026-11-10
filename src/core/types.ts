@@ -11,6 +11,7 @@ export interface Layer {
   visible: boolean;
   locked: boolean;
   fixed: boolean;
+  group: string;
 }
 
 export type Blend = 'normal' | 'difference' | 'multiply' | 'screen';
@@ -23,11 +24,12 @@ export interface SiteState {
   invert: boolean;
   shown: boolean;
   allHidden: boolean;
+  filter: string;
   panel: { x: number; y: number; collapsed: boolean };
 }
 
 export type LayerPatch = Partial<
-  Pick<Layer, 'name' | 'x' | 'y' | 'opacity' | 'scale' | 'visible' | 'locked' | 'fixed'>
+  Pick<Layer, 'name' | 'x' | 'y' | 'opacity' | 'scale' | 'visible' | 'locked' | 'fixed' | 'group'>
 >;
 
 export interface NewLayer {

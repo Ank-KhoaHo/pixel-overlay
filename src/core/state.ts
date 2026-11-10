@@ -19,6 +19,7 @@ export function emptySiteState(): SiteState {
     invert: false,
     shown: true,
     allHidden: false,
+    filter: '',
     panel: { ...PANEL_DEFAULT },
   };
 }
@@ -106,6 +107,11 @@ export function parseSiteState(raw: unknown): SiteState | null {
     allHidden = s.allHidden;
   }
 
+  let filter = '';
+  if (typeof s.filter === 'string') {
+    filter = s.filter;
+  }
+
   if (s.activeLayerId !== null) {
     if (
       typeof s.activeLayerId !== 'string' ||
@@ -133,17 +139,69 @@ export function parseSiteState(raw: unknown): SiteState | null {
         typeof (l as unknown as Record<string, unknown>).fixed === 'boolean'
           ? ((l as unknown as Record<string, unknown>).fixed as boolean)
           : false,
+      group:
+        typeof (l as unknown as Record<string, unknown>).group === 'string'
+          ? ((l as unknown as Record<string, unknown>).group as string)
+          : '',
     })),
     activeLayerId: s.activeLayerId,
     blend,
     invert,
     shown: s.shown,
     allHidden,
+    filter,
     panel: {
       x: p.x,
       y: p.y,
       collapsed: p.collapsed,
     },
+  };
+}
+
+export function normalizeGroup(g: string): string {
+  return g.trim().slice(0, 40);
+}
+
+export function groupsOf(s: SiteState): string[] {
+  const set = new Set<string>();
+  for (const l of s.layers) {
+    if (l.group && l.group.length > 0) {
+      set.add(l.group);
+    }
+  }
+  return Array.from(set).sort();
+}
+
+export function inFilter(s: Pick<SiteState, 'filter'>, l: Pick<Layer, 'group'>): boolean {
+  return s.filter === '' || l.group === s.filter;
+}
+
+function findTopLayerInFilter(layers: Layer[], filter: string): string | null {
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const l = layers[i]!;
+    if (inFilter({ filter }, l)) {
+      return l.id;
+    }
+  }
+  return null;
+}
+
+export function setFilter(s: SiteState, f: string): SiteState {
+  const nextFilter = normalizeGroup(f);
+  let nextActiveLayerId = s.activeLayerId;
+  if (nextActiveLayerId !== null) {
+    const active = s.layers.find((l) => l.id === nextActiveLayerId);
+    if (!active || !inFilter({ filter: nextFilter }, active)) {
+      nextActiveLayerId = findTopLayerInFilter(s.layers, nextFilter);
+    }
+  }
+  if (nextFilter === s.filter && nextActiveLayerId === s.activeLayerId) {
+    return s;
+  }
+  return {
+    ...s,
+    filter: nextFilter,
+    activeLayerId: nextActiveLayerId,
   };
 }
 
@@ -161,6 +219,7 @@ export function addLayer(s: SiteState, l: NewLayer): SiteState {
     visible: true,
     locked: false,
     fixed: false,
+    group: s.filter,
   };
   return {
     ...s,
@@ -187,8 +246,7 @@ export function removeLayer(
 
   let newActiveLayerId = s.activeLayerId;
   if (s.activeLayerId === id) {
-    const top = newLayers[newLayers.length - 1];
-    newActiveLayerId = top ? top.id : null;
+    newActiveLayerId = findTopLayerInFilter(newLayers, s.filter);
   }
 
   return {
@@ -197,7 +255,10 @@ export function removeLayer(
       layers: newLayers,
       activeLayerId: newActiveLayerId,
     },
-    removedImageId: removedLayer.imageId,
+    // An import can give two layers one image; free it only when no layer is left using it.
+    removedImageId: newLayers.some((l) => l.imageId === removedLayer.imageId)
+      ? null
+      : removedLayer.imageId,
   };
 }
 
@@ -282,6 +343,11 @@ export function updateLayer(s: SiteState, id: string, patch: LayerPatch): SiteSt
     nextFixed = Boolean(patch.fixed);
   }
 
+  let nextGroup = layer.group;
+  if (patch.group !== undefined && typeof patch.group === 'string') {
+    nextGroup = normalizeGroup(patch.group);
+  }
+
   if (
     nextOpacity === layer.opacity &&
     nextScale === layer.scale &&
@@ -290,7 +356,8 @@ export function updateLayer(s: SiteState, id: string, patch: LayerPatch): SiteSt
     nextName === layer.name &&
     nextVisible === layer.visible &&
     nextLocked === layer.locked &&
-    nextFixed === layer.fixed
+    nextFixed === layer.fixed &&
+    nextGroup === layer.group
   ) {
     return s;
   }
@@ -305,11 +372,23 @@ export function updateLayer(s: SiteState, id: string, patch: LayerPatch): SiteSt
     visible: nextVisible,
     locked: nextLocked,
     fixed: nextFixed,
+    group: nextGroup,
   };
+
+  const nextLayers = s.layers.map((l) => (l.id === id ? updatedLayer : l));
+
+  let nextActiveLayerId = s.activeLayerId;
+  if (nextActiveLayerId !== null) {
+    const active = nextLayers.find((l) => l.id === nextActiveLayerId);
+    if (!active || !inFilter(s, active)) {
+      nextActiveLayerId = findTopLayerInFilter(nextLayers, s.filter);
+    }
+  }
 
   return {
     ...s,
-    layers: s.layers.map((l) => (l.id === id ? updatedLayer : l)),
+    layers: nextLayers,
+    activeLayerId: nextActiveLayerId,
   };
 }
 

@@ -12,6 +12,7 @@ import {
   selectLayer,
   setAllHidden,
   setBlend,
+  setFilter,
   setInvert,
   setPanel,
   setShown,
@@ -306,6 +307,16 @@ export default defineContentScript({
         }
       };
 
+      const handleSetFilter = (filter: string) => {
+        try {
+          currentState = setFilter(currentState, filter);
+          renderAll();
+          void saveState();
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+      };
+
       const renderAll = () => {
         try {
           layersView.render(currentState, images);
@@ -328,6 +339,7 @@ export default defineContentScript({
                 onClose: handleClose,
                 onSavePanelPosition: handleSavePanelPosition,
                 onAlign: handleAlign,
+                onSetFilter: handleSetFilter,
               });
             }
             panelView.render(currentState, images, panelError);
@@ -464,6 +476,9 @@ export default defineContentScript({
                   break;
                 case 'hide-all':
                   handleSetAllHidden(msg.on);
+                  break;
+                case 'filter':
+                  handleSetFilter(msg.filter);
                   break;
                 case 'align':
                   handleAlign(msg.id, msg.how);

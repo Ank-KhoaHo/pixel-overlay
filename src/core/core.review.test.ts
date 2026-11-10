@@ -57,6 +57,7 @@ describe('emptySiteState', () => {
       activeLayerId: null,
       blend: 'normal',
       invert: false,
+      filter: '',
       shown: true,
       allHidden: false,
       panel: { x: -1, y: 16, collapsed: false },
@@ -83,6 +84,7 @@ describe('addLayer', () => {
       visible: true,
       locked: false,
       fixed: false,
+      group: '',
     });
   });
 

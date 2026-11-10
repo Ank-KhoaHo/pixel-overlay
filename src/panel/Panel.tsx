@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { isKeepable, siteOf } from '../core/site';
+import { groupsOf } from '../core/state';
 import { buildExport, exportFilename } from '../core/transfer';
 import {
   KEPT_KEY,
@@ -38,6 +39,7 @@ export interface PanelProps {
   onClose: () => void;
   onSavePanelPosition: (x: number, y: number) => void;
   onAlign: (id: string, how: 'center' | 'fit-width') => void;
+  onSetFilter: (filter: string) => void;
 }
 
 export function Panel({
@@ -62,6 +64,7 @@ export function Panel({
   onClose,
   onSavePanelPosition,
   onAlign,
+  onSetFilter,
 }: PanelProps) {
   const [error, setError] = useState<string>(propError ?? '');
   const [isKept, setIsKept] = useState<boolean>(false);
@@ -478,13 +481,21 @@ export function Panel({
             layers={state.layers}
             activeLayerId={state.activeLayerId}
             images={images}
+            filter={state.filter}
+            groups={groupsOf(state)}
             onSelectLayer={onSelectLayer}
             onUpdateLayer={onUpdateLayer}
             onMoveLayer={onMoveLayer}
             onDeleteLayer={onDeleteLayer}
+            onSetFilter={onSetFilter}
           />
 
-          <LayerControls layer={activeLayer} onUpdateLayer={onUpdateLayer} onAlign={onAlign} />
+          <LayerControls
+            layer={activeLayer}
+            groups={groupsOf(state)}
+            onUpdateLayer={onUpdateLayer}
+            onAlign={onAlign}
+          />
         </>
       )}
     </div>

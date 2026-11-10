@@ -1,6 +1,6 @@
 // Claude's review tests for ticket A12 (export and import a site's layers). agy: never edit this file.
 import { describe, expect, it } from 'vitest';
-import { addLayer, emptySiteState, setBlend } from './state';
+import { addLayer, emptySiteState, removeLayer, setBlend } from './state';
 import { appendImported, buildExport, EXPORT_FORMAT, parseImport } from './transfer';
 import { MAX_IMAGE_BYTES, type SiteState } from './types';
 
@@ -119,5 +119,15 @@ describe('appendImported', () => {
     const out = appendImported(before, r, () => crypto.randomUUID());
     expect(out.state.blend).toBe('screen');
     expect(out.state.panel).toEqual(before.panel);
+  });
+});
+
+describe('layers that share one image (an import can make them)', () => {
+  it('deleting one keeps the image; deleting the last one frees it', () => {
+    let s = addLayer(emptySiteState(), { id: 'L1', name: 'a', imageId: 'I1', naturalWidth: 5, naturalHeight: 5 });
+    s = addLayer(s, { id: 'L2', name: 'b', imageId: 'I1', naturalWidth: 5, naturalHeight: 5 });
+    const first = removeLayer(s, 'L1');
+    expect(first.removedImageId).toBeNull();
+    expect(removeLayer(first.state, 'L2').removedImageId).toBe('I1');
   });
 });

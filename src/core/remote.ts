@@ -13,6 +13,7 @@ export type PanelOp =
   | { op: 'blend'; blend: Blend }
   | { op: 'invert'; on: boolean }
   | { op: 'hide-all'; on: boolean }
+  | { op: 'filter'; filter: string }
   | { op: 'align'; id: string; how: 'center' | 'fit-width' }
   | { op: 'import'; file: unknown };
 
@@ -29,6 +30,7 @@ const ALLOWED_PATCH_KEYS = new Set([
   'visible',
   'locked',
   'fixed',
+  'group',
 ]);
 
 function isNewLayer(x: unknown): x is NewLayer {
@@ -67,6 +69,7 @@ function isLayerPatch(x: unknown): x is LayerPatch {
   if ('visible' in o && typeof o.visible !== 'boolean') return false;
   if ('locked' in o && typeof o.locked !== 'boolean') return false;
   if ('fixed' in o && typeof o.fixed !== 'boolean') return false;
+  if ('group' in o && typeof o.group !== 'string') return false;
   return true;
 }
 
@@ -102,6 +105,8 @@ export function isPanelOp(x: unknown): x is PanelOp {
       return typeof o.on === 'boolean';
     case 'hide-all':
       return typeof o.on === 'boolean';
+    case 'filter':
+      return typeof o.filter === 'string';
     case 'align':
       return (
         typeof o.id === 'string' &&

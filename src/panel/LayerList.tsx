@@ -1,14 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { inFilter } from '../core/state';
 import type { Layer, LayerPatch } from '../core/types';
 
 export interface LayerListProps {
   layers: Layer[];
   activeLayerId: string | null;
   images: Map<string, string>;
+  filter?: string;
+  groups?: string[];
   onSelectLayer: (id: string) => void;
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
   onMoveLayer: (id: string, dir: 'up' | 'down') => void;
   onDeleteLayer: (id: string) => void;
+  onSetFilter?: (filter: string) => void;
 }
 
 function EyeIcon() {
@@ -55,10 +59,13 @@ export function LayerList({
   layers,
   activeLayerId,
   images,
+  filter = '',
+  groups = [],
   onSelectLayer,
   onUpdateLayer,
   onMoveLayer,
   onDeleteLayer,
+  onSetFilter,
 }: LayerListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState('');
@@ -78,7 +85,10 @@ export function LayerList({
   }
 
   // Top layer FIRST (reverse of state.layers)
-  const reversed = [...layers].reverse();
+  const shownLayers = layers.filter((l) => inFilter({ filter }, l));
+  // A saved filter whose group has gone must still be listed, or it could never be cleared.
+  const filterOptions = filter !== '' && !groups.includes(filter) ? [...groups, filter].sort() : groups;
+  const reversed = [...shownLayers].reverse();
 
   const handleStartRename = (layer: Layer) => {
     setEditingId(layer.id);
@@ -116,7 +126,25 @@ export function LayerList({
   };
 
   return (
-    <div className="panel-layer-list">
+    <div className="panel-layers-container">
+      {filterOptions.length > 0 && (
+        <div className="panel-filter-row">
+          <select
+            data-po="group-filter"
+            className="group-filter-select"
+            value={filter}
+            onChange={(e) => onSetFilter?.(e.target.value)}
+          >
+            <option value="">All layers</option>
+            {filterOptions.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <div className="panel-layer-list">
       {reversed.map((layer) => {
         const isActive = layer.id === activeLayerId;
         const isEditing = editingId === layer.id;
@@ -226,6 +254,7 @@ export function LayerList({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

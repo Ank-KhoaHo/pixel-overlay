@@ -1,5 +1,5 @@
 import { isImageDataUrl } from './image';
-import { isLayer } from './state';
+import { isLayer, normalizeGroup } from './state';
 import { MAX_IMAGE_BYTES, type Layer, type SiteState } from './types';
 
 export const EXPORT_FORMAT = 'pixel-veil-site';
@@ -127,6 +127,10 @@ export function parseImport(
       typeof (l as unknown as Record<string, unknown>).fixed === 'boolean'
         ? ((l as unknown as Record<string, unknown>).fixed as boolean)
         : false,
+    group:
+      typeof (l as unknown as Record<string, unknown>).group === 'string'
+        ? normalizeGroup((l as unknown as Record<string, unknown>).group as string)
+        : '',
   }));
 
   const images: Record<string, string> = {};

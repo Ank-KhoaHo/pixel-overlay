@@ -3,6 +3,7 @@ import { MAX_SCALE, MIN_SCALE, type Layer, type LayerPatch } from '../core/types
 
 export interface LayerControlsProps {
   layer: Layer | null;
+  groups?: string[];
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
   onAlign: (id: string, how: 'center' | 'fit-width') => void;
 }
@@ -89,7 +90,74 @@ function NumberInput({
   );
 }
 
-export function LayerControls({ layer, onUpdateLayer, onAlign }: LayerControlsProps) {
+function GroupInput({
+  value,
+  groups,
+  onCommit,
+}: {
+  value: string;
+  groups: string[];
+  onCommit: (val: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const isDirtyRef = useRef(false);
+
+  useEffect(() => {
+    if (!isDirtyRef.current) {
+      setDraft(value);
+    }
+  }, [value]);
+
+  const commit = () => {
+    if (!isDirtyRef.current) {
+      return;
+    }
+    isDirtyRef.current = false;
+    onCommit(draft);
+  };
+
+  return (
+    <div className="control-row">
+      <label htmlFor="po-control-group" className="control-label">
+        Group
+      </label>
+      <input
+        id="po-control-group"
+        type="text"
+        data-po="group"
+        className="control-input-text"
+        list="po-groups-datalist"
+        value={draft}
+        onFocus={() => {
+          isDirtyRef.current = false;
+        }}
+        onChange={(e) => {
+          isDirtyRef.current = true;
+          setDraft(e.target.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            commit();
+            e.currentTarget.blur();
+          }
+        }}
+        onBlur={commit}
+      />
+      <datalist id="po-groups-datalist">
+        {groups.map((g) => (
+          <option key={g} value={g} />
+        ))}
+      </datalist>
+    </div>
+  );
+}
+
+export function LayerControls({
+  layer,
+  groups = [],
+  onUpdateLayer,
+  onAlign,
+}: LayerControlsProps) {
   if (!layer) {
     return null;
   }
@@ -231,6 +299,13 @@ export function LayerControls({ layer, onUpdateLayer, onAlign }: LayerControlsPr
           Fixed to window
         </button>
       </div>
+
+      <GroupInput
+        key={layer.id}
+        value={layer.group}
+        groups={groups}
+        onCommit={(group) => onUpdateLayer(layer.id, { group })}
+      />
     </div>
   );
 }

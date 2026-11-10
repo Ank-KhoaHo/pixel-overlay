@@ -47,6 +47,8 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
    layers from such a file on top of the ones already there, on any site or computer.
 7. **Side panel** (Chrome) moves the controls into Chrome's side panel, so they stop covering a
    narrow page. The page panel comes back when you close the side panel.
+8. **Group** names a layer's group (say `login` or `home`). Once a group exists, the list above
+   the layers shows one group at a time, on the page too, and remembers your choice per site.
 
 Keyboard shortcuts (change them in `chrome://extensions/shortcuts`):
 
@@ -67,7 +69,7 @@ and switching it off gives the permission back.
 
 - Images: PNG, JPEG, WebP and GIF, up to 25 MB each. SVG is not accepted.
 - Layers are kept per site (scheme, host and port), not per page: `/login` and `/home` on the
-  same site share one list. Hide the layers you are not using.
+  same site share one list. Put them in groups to show one page's designs at a time.
 - Local files (`file://`) work in Chrome after you turn on **Allow access to file URLs** in the
   extension's details; Pixel Veil opens a page that shows how. Layers are kept per folder there,
   and **Keep on this site** is off. Firefox does not allow it: serve the folder with a local web
