@@ -15,9 +15,11 @@ import {
   setShown,
   updateLayer,
 } from '../core/state';
+import { appendImported } from '../core/transfer';
 import type { SiteState } from '../core/types';
 import { mountLayers } from '../overlay/layers';
 import { mountPanel, type PanelView } from '../panel/mountPanel';
+import { newId } from '../shared/ids';
 import { chromeLocalArea, createSiteStore } from '../shared/store';
 
 export default defineContentScript({
@@ -131,6 +133,39 @@ export default defineContentScript({
                       await store.removeImage(newLayer.imageId);
                     } catch (rmErr) {
                       console.warn('[pixel-overlay]', rmErr);
+                    }
+                    try {
+                      currentState = await store.load();
+                      await loadImagesForLayers(currentState.layers);
+                    } catch (loadErr) {
+                      console.warn('[pixel-overlay]', loadErr);
+                    }
+                    const msg = err instanceof Error ? err.message : String(err);
+                    panelError = `Could not save: ${msg}`;
+                    renderAll();
+                    throw err;
+                  }
+                },
+                async onImportLayers(imported) {
+                  const appended = appendImported(currentState, imported, newId);
+                  try {
+                    for (const [id, dataUrl] of Object.entries(appended.images)) {
+                      await store.putImage(id, dataUrl);
+                      images.set(id, dataUrl);
+                    }
+                    currentState = appended.state;
+                    renderAll();
+                    await store.save(currentState);
+                    panelError = '';
+                  } catch (err) {
+                    console.warn('[pixel-overlay]', err);
+                    for (const id of Object.keys(appended.images)) {
+                      images.delete(id);
+                      try {
+                        await store.removeImage(id);
+                      } catch (rmErr) {
+                        console.warn('[pixel-overlay]', rmErr);
+                      }
                     }
                     try {
                       currentState = await store.load();

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import type { Blend, LayerPatch, NewLayer, SiteState } from '../core/types';
+import type { Blend, Layer, LayerPatch, NewLayer, SiteState } from '../core/types';
 import { shadowModeFor } from '../overlay/shadowMode';
 import type { StorageAreaLike } from '../shared/storage';
 import { Panel } from './Panel';
@@ -10,6 +10,7 @@ export interface PanelMountOptions {
   doc: Document;
   area?: StorageAreaLike;
   onAddLayer: (newLayer: NewLayer, dataUrl: string) => Promise<void>;
+  onImportLayers?: (imported: { layers: Layer[]; images: Record<string, string> }) => Promise<void>;
   onSelectLayer: (id: string) => void;
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
   onMoveLayer: (id: string, dir: 'up' | 'down') => void;
@@ -102,6 +103,7 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
             area={opts.area}
             error={error}
             onAddLayer={opts.onAddLayer}
+            onImportLayers={opts.onImportLayers}
             onSelectLayer={opts.onSelectLayer}
             onUpdateLayer={opts.onUpdateLayer}
             onMoveLayer={opts.onMoveLayer}

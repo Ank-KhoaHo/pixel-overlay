@@ -193,9 +193,21 @@ input[type="range"] {
   border-bottom: 1px solid #d0d7de;
 }
 
+.panel-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .panel-add-btn {
-  width: 100%;
+  flex: 1;
   font-weight: 500;
+}
+
+.panel-transfer-btn {
+  font-size: 12px;
+  padding: 0 8px;
+  flex-shrink: 0;
 }
 
 .panel-error {

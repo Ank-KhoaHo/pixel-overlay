@@ -25,3 +25,10 @@ export function layerNameFromFile(fileName: string): string {
   const trimmed = base.trim();
   return trimmed.length > 0 ? trimmed : 'Layer';
 }
+
+const DATA_URL_RE = /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/i;
+
+export function isImageDataUrl(s: unknown): s is string {
+  return typeof s === 'string' && DATA_URL_RE.test(s);
+}
+

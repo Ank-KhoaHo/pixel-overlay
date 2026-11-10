@@ -43,6 +43,8 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 4. To have the layers return after a reload, switch on **Keep on this site** and allow it in
    the small window that opens. Chrome asks once per site.
 5. Click the icon again to hide everything.
+6. **Export** saves this site's layers and images to one `.json` file. **Import** adds the
+   layers from such a file on top of the ones already there, on any site or computer.
 
 Keyboard shortcuts (change them in `chrome://extensions/shortcuts`):
 

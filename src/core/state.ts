@@ -23,7 +23,7 @@ export function emptySiteState(): SiteState {
   };
 }
 
-function isLayer(x: unknown): x is Layer {
+export function isLayer(x: unknown): x is Layer {
   if (typeof x !== 'object' || x === null || Array.isArray(x)) return false;
   const l = x as Record<string, unknown>;
   return (

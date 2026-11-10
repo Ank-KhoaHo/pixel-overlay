@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { isKeepable, siteOf } from '../core/site';
+import { buildExport, exportFilename } from '../core/transfer';
 import {
   KEPT_KEY,
   type Blend,
+  type Layer,
   type LayerPatch,
   type NewLayer,
   type SiteState,
@@ -22,6 +24,7 @@ export interface PanelProps {
   error?: string;
   onError?: (err: string) => void;
   onAddLayer: (newLayer: NewLayer, dataUrl: string) => Promise<void>;
+  onImportLayers?: (imported: { layers: Layer[]; images: Record<string, string> }) => Promise<void>;
   onSelectLayer: (id: string) => void;
   onUpdateLayer: (id: string, patch: LayerPatch) => void;
   onMoveLayer: (id: string, dir: 'up' | 'down') => void;
@@ -42,6 +45,7 @@ export function Panel({
   error: propError,
   onError: propOnError,
   onAddLayer,
+  onImportLayers,
   onSelectLayer,
   onUpdateLayer,
   onMoveLayer,
@@ -274,6 +278,39 @@ export function Panel({
     onSetAllHidden(!state.allHidden);
   };
 
+  const handleExport = () => {
+    try {
+      const imagesObj: Record<string, string> = {};
+      for (const [id, dataUrl] of images.entries()) {
+        imagesObj[id] = dataUrl;
+      }
+      const currentSite = siteOf(location.href) ?? location.origin;
+      const now = new Date();
+      const data = buildExport(currentSite, state, imagesObj, now);
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      const filename = exportFilename(location.host, now);
+
+      const doc = hostEl.ownerDocument;
+      const a = doc.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      (doc.body ?? doc.documentElement).appendChild(a);
+      a.click();
+      setTimeout(() => {
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      }, 1000);
+    } catch (err) {
+      console.warn('[pixel-overlay]', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Could not export: ${msg}`);
+      propOnError?.(`Could not export: ${msg}`);
+    }
+  };
+
   return (
     <div
       ref={rootRef}
@@ -381,6 +418,7 @@ export function Panel({
 
           <AddImage
             error={error}
+            hasLayers={hasLayers}
             onError={(err) => {
               setError(err);
               propOnError?.(err);
@@ -390,6 +428,8 @@ export function Panel({
               propOnError?.('');
             }}
             onAddLayer={onAddLayer}
+            onExport={handleExport}
+            onImportLayers={onImportLayers ?? (async () => {})}
           />
 
           <LayerList
