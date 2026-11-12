@@ -183,10 +183,13 @@ def _deliberately_unpublished(rel: str) -> bool:
     return False
 
 
-MIN_MD_FILES = 5
-MIN_LINKS_LOCAL = 12
-MIN_LINKS_CI = 6
-MIN_ROWS = 8
+# Floors, not targets (D1). Measured 2026-11-12: 7 markdown files and 19 links in BOTH modes
+# (every link in a tracked file points at a tracked file), 25 backlog rows. Raise them again
+# after any large addition; the CI pair tracks the tracked half only.
+MIN_MD_FILES = 6
+MIN_LINKS_LOCAL = 16
+MIN_LINKS_CI = 16
+MIN_ROWS = 20
 PUBLIC_MD_MAX_LINES = 35
 
 
@@ -246,6 +249,27 @@ def test_the_working_material_is_never_tracked():
         "design doc S6: it must say almost nothing, and a growing page is the shape an "
         "inventory of what is withheld creeps in as"
     )
+
+
+def test_the_walk_sees_untracked_files_but_not_ignored_ones():
+    """D1: _scannable must see a file about to be committed (--others) and must skip a
+    gitignored one (--exclude-standard). The floors above cannot notice either flag being
+    dropped, because this repo's file count has headroom over them."""
+    root = _repo_root()
+    fresh = root / "zz-d1-probe-untracked.md"
+    hidden = root / "node_modules" / "zz-d1-probe-ignored.md"
+    try:
+        fresh.write_text("# probe\n", encoding="utf-8", newline="\n")
+        hidden.parent.mkdir(exist_ok=True)
+        hidden.write_text("# probe\n", encoding="utf-8", newline="\n")
+        seen = _scannable("*.md")
+        assert "zz-d1-probe-untracked.md" in seen, "an untracked file is invisible to the guard"
+        assert not any(s.endswith("zz-d1-probe-ignored.md") for s in seen), (
+            "a gitignored file is being scanned"
+        )
+    finally:
+        fresh.unlink(missing_ok=True)
+        hidden.unlink(missing_ok=True)
 
 
 def test_every_markdown_link_resolves():
