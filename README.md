@@ -77,7 +77,6 @@ and switching it off gives the permission back.
 - A layer pinned to the window is always drawn above the layers that scroll with the page,
   whatever their order in the list.
 - Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
-- On the rare page that sets a CSS `transform` on `<html>`, the panel scrolls with the page.
 - Built for Chrome and Chromium browsers. A Firefox build exists (`npm run build:firefox`,
   Firefox 140 or later) but is not on Firefox Add-ons yet.
 

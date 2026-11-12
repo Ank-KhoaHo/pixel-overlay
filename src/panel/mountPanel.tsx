@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Blend, Layer, LayerPatch, NewLayer, SiteState } from '../core/types';
 import { shadowModeFor } from '../overlay/shadowMode';
+import { promoteToTopLayer } from '../overlay/topLayer';
 import type { StorageAreaLike } from '../shared/storage';
 import { Panel } from './Panel';
 import panelCss from './panel.css?inline';
@@ -71,6 +72,7 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
 
   const targetDoc = opts.doc.documentElement ?? opts.doc.body ?? opts.doc;
   targetDoc.appendChild(host);
+  promoteToTopLayer(host);
 
   let latestState: SiteState | null = null;
   let latestImages: Map<string, string> = new Map();
@@ -98,6 +100,7 @@ export function mountPanel(opts: PanelMountOptions): PanelView {
         if (!host.isConnected) {
           opts.doc.documentElement?.appendChild(host);
         }
+        promoteToTopLayer(host);
         latestState = s;
         latestImages = images;
         applyHostPosition(host, s.panel, win);

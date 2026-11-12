@@ -3,6 +3,7 @@ import { snap } from '../core/align';
 import { inFilter } from '../core/state';
 import { keyToNudge } from '../core/keys';
 import { shadowModeFor } from './shadowMode';
+import { promoteToTopLayer } from './topLayer';
 
 export interface LayersView {
   render(s: SiteState, images: Map<string, string>): void;
@@ -72,6 +73,9 @@ export function mountLayers(opts: {
         root.appendChild(fixedHost);
       }
     }
+    // A5: layers first, then the pinned host, so the top layer keeps that order.
+    promoteToTopLayer(host);
+    promoteToTopLayer(fixedHost);
   }
 
   attachHosts();
