@@ -5,6 +5,7 @@ import type { Blend, LayerPatch, NewLayer, SiteState } from './types';
 export const SIDE_PORT = 'po-side';
 
 export type PanelOp =
+  | { op: 'show' }
   | { op: 'add'; newLayer: NewLayer; dataUrl: string }
   | { op: 'select'; id: string }
   | { op: 'update'; id: string; patch: LayerPatch }
@@ -17,7 +18,7 @@ export type PanelOp =
   | { op: 'align'; id: string; how: 'center' | 'fit-width' }
   | { op: 'import'; file: unknown };
 
-export type SideUpdate = { type: 'state'; site: string; state: SiteState };
+export type SideUpdate = { type: 'state'; site: string; state: SiteState; error: string };
 
 const BLENDS: readonly Blend[] = ['normal', 'difference', 'multiply', 'screen'];
 
@@ -79,6 +80,8 @@ export function isPanelOp(x: unknown): x is PanelOp {
   }
   const o = x as Record<string, unknown>;
   switch (o.op) {
+    case 'show':
+      return true;
     case 'add':
       return (
         isNewLayer(o.newLayer) &&

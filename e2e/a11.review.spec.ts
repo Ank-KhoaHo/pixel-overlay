@@ -41,8 +41,10 @@ test('the panel button pins and unpins the active layer, and it is saved', async
   await expect.poll(async () => (await s.state())?.layers[0] && (await s.state())!.layers[0]!['fixed' as never]).toBe(true);
   await s.page.evaluate(() => window.scrollTo(0, 500));
   await expect.poll(y).toBe(100);
+  // B3 (F4b): unpinning while scrolled keeps the layer where it is on screen.
   await s.page.locator(P('fixed')).click();
-  await expect.poll(y).toBe(-400);
+  await expect.poll(y).toBe(100);
+  await expect.poll(async () => (await s.state())?.layers[0]?.y).toBe(600);
 });
 
 test('a pinned layer stays put when <body> is the scroller', async () => {

@@ -308,11 +308,13 @@ export function Panel({
 
       const filename = exportFilename(exportSite, now);
 
-      const doc = hostEl?.ownerDocument ?? document;
+      const parent = rootRef.current;
+      if (!parent) return;
+      const doc = parent.ownerDocument ?? document;
       const a = doc.createElement('a');
       a.href = blobUrl;
       a.download = filename;
-      (doc.body ?? doc.documentElement).appendChild(a);
+      parent.appendChild(a);
       a.click();
       setTimeout(() => {
         a.remove();

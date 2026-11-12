@@ -18,7 +18,7 @@ import {
   setShown,
   updateLayer,
 } from '../core/state';
-import { appendImported, parseImport } from '../core/transfer';
+import { appendLayers, parseImport, prepareImport } from '../core/transfer';
 import type { Blend, Layer, LayerPatch, NewLayer, SiteState } from '../core/types';
 import { mountLayers } from '../overlay/layers';
 import { mountPanel, type PanelView } from '../panel/mountPanel';
@@ -149,19 +149,19 @@ export default defineContentScript({
         layers: Layer[];
         images: Record<string, string>;
       }) => {
-        const appended = appendImported(currentState, imported, newId);
+        const prepared = prepareImport(imported, newId);
         try {
-          for (const [id, dataUrl] of Object.entries(appended.images)) {
+          for (const [id, dataUrl] of Object.entries(prepared.images)) {
             await store.putImage(id, dataUrl);
             images.set(id, dataUrl);
           }
-          currentState = appended.state;
+          currentState = appendLayers(currentState, prepared.layers);
           renderAll();
           await store.save(currentState);
           panelError = '';
         } catch (err) {
           console.warn('[pixel-overlay]', err);
-          for (const id of Object.keys(appended.images)) {
+          for (const id of Object.keys(prepared.images)) {
             images.delete(id);
             try {
               await store.removeImage(id);
@@ -194,7 +194,30 @@ export default defineContentScript({
 
       const handleUpdateLayer = (id: string, patch: LayerPatch) => {
         try {
-          currentState = updateLayer(currentState, id, patch);
+          let nextPatch = patch;
+          if (patch.fixed !== undefined) {
+            const currentLayer = currentState.layers.find((l) => l.id === id);
+            if (currentLayer && currentLayer.fixed !== patch.fixed) {
+              const sx = window.scrollX;
+              const sy = window.scrollY;
+              const curX = patch.x !== undefined ? patch.x : currentLayer.x;
+              const curY = patch.y !== undefined ? patch.y : currentLayer.y;
+              if (patch.fixed) {
+                nextPatch = {
+                  ...patch,
+                  x: curX - sx,
+                  y: curY - sy,
+                };
+              } else {
+                nextPatch = {
+                  ...patch,
+                  x: curX + sx,
+                  y: curY + sy,
+                };
+              }
+            }
+          }
+          currentState = updateLayer(currentState, id, nextPatch);
           renderAll();
           void saveState();
         } catch (err) {
@@ -357,6 +380,7 @@ export default defineContentScript({
             type: 'state',
             site,
             state: currentState,
+            error: panelError,
           };
           for (const port of connectedPorts) {
             try {
@@ -435,6 +459,7 @@ export default defineContentScript({
               type: 'state',
               site,
               state: currentState,
+              error: panelError,
             } satisfies SideUpdate);
           } catch (err) {
             console.warn('[pixel-overlay]', err);
@@ -447,55 +472,61 @@ export default defineContentScript({
             }
           });
 
+          let portQueue: Promise<void> = Promise.resolve();
+
           port.onMessage.addListener((msg: unknown) => {
-            try {
-              if (!isPanelOp(msg)) return;
-              switch (msg.op) {
-                case 'add':
-                  void handleAddLayer(msg.newLayer, msg.dataUrl).catch((err) => {
-                    console.warn('[pixel-overlay]', err);
-                  });
-                  break;
-                case 'select':
-                  handleSelectLayer(msg.id);
-                  break;
-                case 'update':
-                  handleUpdateLayer(msg.id, msg.patch);
-                  break;
-                case 'move':
-                  handleMoveLayer(msg.id, msg.dir);
-                  break;
-                case 'delete':
-                  handleDeleteLayer(msg.id);
-                  break;
-                case 'blend':
-                  handleSetBlend(msg.blend);
-                  break;
-                case 'invert':
-                  handleSetInvert(msg.on);
-                  break;
-                case 'hide-all':
-                  handleSetAllHidden(msg.on);
-                  break;
-                case 'filter':
-                  handleSetFilter(msg.filter);
-                  break;
-                case 'align':
-                  handleAlign(msg.id, msg.how);
-                  break;
-                case 'import': {
-                  const res = parseImport(msg.file);
-                  if (!('error' in res)) {
-                    void handleImportLayers(res).catch((err) => {
-                      console.warn('[pixel-overlay]', err);
-                    });
+            portQueue = portQueue.then(async () => {
+              try {
+                await initialLoadPromise;
+                if (!isPanelOp(msg)) return;
+                switch (msg.op) {
+                  case 'show':
+                    currentState = setShown(currentState, true);
+                    renderAll();
+                    await saveState();
+                    break;
+                  case 'add':
+                    await handleAddLayer(msg.newLayer, msg.dataUrl);
+                    break;
+                  case 'select':
+                    handleSelectLayer(msg.id);
+                    break;
+                  case 'update':
+                    handleUpdateLayer(msg.id, msg.patch);
+                    break;
+                  case 'move':
+                    handleMoveLayer(msg.id, msg.dir);
+                    break;
+                  case 'delete':
+                    handleDeleteLayer(msg.id);
+                    break;
+                  case 'blend':
+                    handleSetBlend(msg.blend);
+                    break;
+                  case 'invert':
+                    handleSetInvert(msg.on);
+                    break;
+                  case 'hide-all':
+                    handleSetAllHidden(msg.on);
+                    break;
+                  case 'filter':
+                    handleSetFilter(msg.filter);
+                    break;
+                  case 'align':
+                    handleAlign(msg.id, msg.how);
+                    break;
+                  case 'import': {
+                    const res = parseImport(msg.file);
+                    if (!('error' in res)) {
+                      await handleImportLayers(res);
+                    }
+                    break;
                   }
-                  break;
                 }
+              } catch (err) {
+                console.warn('[pixel-overlay]', err);
               }
-            } catch (err) {
-              console.warn('[pixel-overlay]', err);
-            }
+            });
           });
         } catch (err) {
           console.warn('[pixel-overlay]', err);

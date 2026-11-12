@@ -126,6 +126,7 @@ export function mountLayers(opts: {
 
     img.addEventListener('pointerdown', (e: PointerEvent) => {
       try {
+        if (!e.isTrusted) return;
         if (e.button !== 0) return;
         if (!currentState || !currentState.shown || currentState.allHidden) return;
         const isActUnlocked =
@@ -222,6 +223,7 @@ export function mountLayers(opts: {
 
   const handleKeyDown = (e: KeyboardEvent) => {
     try {
+      if (!e.isTrusted) return;
       const path = e.composedPath();
       const target =
         path.length > 0 ? (path[0] as HTMLElement | null) : (e.target as HTMLElement | null);

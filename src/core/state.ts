@@ -414,8 +414,25 @@ export function moveLayer(s: SiteState, id: string, dir: 'up' | 'down'): SiteSta
   if (index === -1) {
     return s;
   }
-  const targetIndex = dir === 'up' ? index + 1 : index - 1;
-  if (targetIndex < 0 || targetIndex >= s.layers.length) {
+
+  let targetIndex = -1;
+  if (dir === 'up') {
+    for (let i = index + 1; i < s.layers.length; i++) {
+      if (inFilter(s, s.layers[i]!)) {
+        targetIndex = i;
+        break;
+      }
+    }
+  } else {
+    for (let i = index - 1; i >= 0; i--) {
+      if (inFilter(s, s.layers[i]!)) {
+        targetIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (targetIndex === -1) {
     return s;
   }
 

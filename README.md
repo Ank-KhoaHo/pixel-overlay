@@ -74,6 +74,8 @@ and switching it off gives the permission back.
   extension's details; Pixel Veil opens a page that shows how. Layers are kept per folder there,
   and **Keep on this site** is off. Firefox does not allow it: serve the folder with a local web
   server instead.
+- A layer pinned to the window is always drawn above the layers that scroll with the page,
+  whatever their order in the list.
 - Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
 - On the rare page that sets a CSS `transform` on `<html>`, the panel scrolls with the page.
 - Built for Chrome and Chromium browsers. A Firefox build exists (`npm run build:firefox`,

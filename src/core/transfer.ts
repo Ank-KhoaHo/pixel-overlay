@@ -1,5 +1,5 @@
 import { isImageDataUrl } from './image';
-import { isLayer, normalizeGroup } from './state';
+import { inFilter, isLayer, normalizeGroup } from './state';
 import { MAX_IMAGE_BYTES, type Layer, type SiteState } from './types';
 
 export const EXPORT_FORMAT = 'pixel-veil-site';
@@ -141,11 +141,10 @@ export function parseImport(
   return { layers, images };
 }
 
-export function appendImported(
-  s: SiteState,
+export function prepareImport(
   r: { layers: Layer[]; images: Record<string, string> },
-  newId: () => string,
-): { state: SiteState; images: Record<string, string> } {
+  newId: () => string = () => crypto.randomUUID(),
+): { layers: Layer[]; images: Record<string, string> } {
   const imageIdMap = new Map<string, string>();
   const newImages: Record<string, string> = {};
 
@@ -172,16 +171,34 @@ export function appendImported(
     };
   });
 
-  const nextLayers = [...s.layers, ...addedLayers];
-  const lastAdded = addedLayers[addedLayers.length - 1];
-  const nextActiveLayerId = lastAdded ? lastAdded.id : s.activeLayerId;
+  return { layers: addedLayers, images: newImages };
+}
+
+export function appendLayers(s: SiteState, layers: Layer[]): SiteState {
+  if (layers.length === 0) {
+    return s;
+  }
+  const nextLayers = [...s.layers, ...layers];
+  const lastAdded = layers[layers.length - 1]!;
+  const anyOutside = s.filter !== '' && layers.some((l) => !inFilter(s, l));
+  const nextFilter = anyOutside ? '' : s.filter;
 
   return {
-    state: {
-      ...s,
-      layers: nextLayers,
-      activeLayerId: nextActiveLayerId,
-    },
-    images: newImages,
+    ...s,
+    layers: nextLayers,
+    activeLayerId: lastAdded.id,
+    filter: nextFilter,
+  };
+}
+
+export function appendImported(
+  s: SiteState,
+  r: { layers: Layer[]; images: Record<string, string> },
+  newId: () => string = () => crypto.randomUUID(),
+): { state: SiteState; images: Record<string, string> } {
+  const prepared = prepareImport(r, newId);
+  return {
+    state: appendLayers(s, prepared.layers),
+    images: prepared.images,
   };
 }

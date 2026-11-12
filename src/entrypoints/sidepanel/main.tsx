@@ -13,6 +13,7 @@ export function SidePanelApp() {
   const [state, setState] = useState<SiteState | null>(null);
   const [images, setImages] = useState<Map<string, string>>(new Map());
   const [isEmpty, setIsEmpty] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   const portRef = useRef<ReturnType<typeof browser.tabs.connect> | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -44,6 +45,7 @@ export function SidePanelApp() {
       setIsEmpty(true);
       setState(null);
       setSite(null);
+      setError('');
     };
 
     const connectToTab = (tabId: number) => {
@@ -78,6 +80,7 @@ export function SidePanelApp() {
               setIsEmpty(false);
               setSite(u.site);
               setState(u.state);
+              setError(u.error ?? '');
 
               const store = createSiteStore(chromeLocalArea(), u.site);
 
@@ -190,12 +193,32 @@ export function SidePanelApp() {
     return null;
   }
 
+  if (!state.shown) {
+    return (
+      <div className="pixel-overlay-panel-root side-mode">
+        <p data-po="side-hidden">Pixel Veil is hidden on this page.</p>
+        <button
+          type="button"
+          data-po="side-show"
+          onClick={() => {
+            portRef.current?.postMessage({
+              op: 'show',
+            } satisfies PanelOp);
+          }}
+        >
+          Show
+        </button>
+      </div>
+    );
+  }
+
   return (
     <Panel
       mode="side"
       site={site}
       state={state}
       images={images}
+      error={error}
       onAddLayer={async (newLayer, dataUrl) => {
         const next = new Map(imagesRef.current);
         next.set(newLayer.imageId, dataUrl);
@@ -216,17 +239,22 @@ export function SidePanelApp() {
         imagesRef.current = next;
         setImages(new Map(next));
 
-        portRef.current?.postMessage({
-          op: 'import',
-          file: {
-            format: EXPORT_FORMAT,
-            version: 1,
-            site,
-            exportedAt: new Date().toISOString(),
-            layers: imported.layers,
-            images: imported.images,
-          },
-        } satisfies PanelOp);
+        const nowStr = new Date().toISOString();
+        for (const layer of imported.layers) {
+          const img = imported.images[layer.imageId];
+          if (img === undefined) continue;
+          portRef.current?.postMessage({
+            op: 'import',
+            file: {
+              format: EXPORT_FORMAT,
+              version: 1,
+              site,
+              exportedAt: nowStr,
+              layers: [layer],
+              images: { [layer.imageId]: img },
+            },
+          } satisfies PanelOp);
+        }
       }}
       onSelectLayer={(id) => {
         portRef.current?.postMessage({
