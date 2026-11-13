@@ -303,13 +303,14 @@ export function Panel({
       const exportSite = site ?? '';
       const data = buildExport(exportSite, state, imagesObj, now);
       const json = JSON.stringify(data, null, 2);
+
+      const parent = rootRef.current;
+      if (!parent) return;
+
       const blob = new Blob([json], { type: 'application/json' });
       const blobUrl = URL.createObjectURL(blob);
 
       const filename = exportFilename(exportSite, now);
-
-      const parent = rootRef.current;
-      if (!parent) return;
       const doc = parent.ownerDocument ?? document;
       const a = doc.createElement('a');
       a.href = blobUrl;

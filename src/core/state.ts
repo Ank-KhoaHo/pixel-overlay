@@ -442,9 +442,18 @@ export function moveLayer(s: SiteState, id: string, dir: 'up' | 'down'): SiteSta
     return s;
   }
 
-  const newLayers = [...s.layers];
-  newLayers[index] = target;
-  newLayers[targetIndex] = current;
+  const withoutMoved = s.layers.filter((_, i) => i !== index);
+  const newTargetIndex = withoutMoved.findIndex((l) => l.id === target.id);
+  if (newTargetIndex === -1) {
+    return s;
+  }
+
+  const insertIndex = dir === 'up' ? newTargetIndex + 1 : newTargetIndex;
+  const newLayers = [
+    ...withoutMoved.slice(0, insertIndex),
+    current,
+    ...withoutMoved.slice(insertIndex),
+  ];
 
   return {
     ...s,

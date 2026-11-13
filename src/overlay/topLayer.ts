@@ -18,14 +18,49 @@ const OVERRIDES: ReadonlyArray<readonly [string, string]> = [
   ['overflow', 'visible'],
   ['max-width', 'none'],
   ['max-height', 'none'],
+  ['min-width', '0'],
+  ['min-height', '0'],
+  ['opacity', '1'],
+  ['filter', 'none'],
+  ['transform', 'none'],
+  ['translate', 'none'],
+  ['scale', 'none'],
+  ['rotate', 'none'],
+  ['visibility', 'visible'],
 ];
 
 export function promoteToTopLayer(el: HTMLElement): void {
   try {
     if (typeof el.showPopover !== 'function') return;
     if (el.getAttribute('popover') !== 'manual') el.setAttribute('popover', 'manual');
-    for (const [prop, value] of OVERRIDES) el.style.setProperty(prop, value, 'important');
+    for (const [prop, value] of OVERRIDES) {
+      if (
+        prop === 'transform' &&
+        el.style.getPropertyValue('transform') &&
+        el.style.getPropertyValue('transform') !== 'none'
+      ) {
+        continue;
+      }
+      el.style.setProperty(prop, value, 'important');
+    }
+    if (el.tagName.toLowerCase() === 'pixel-overlay-panel') {
+      el.style.setProperty('height', 'auto', 'important');
+    }
     if (el.isConnected && !el.matches(':popover-open')) el.showPopover();
+  } catch (err) {
+    console.warn('[pixel-overlay]', err);
+  }
+}
+
+export function raisePanel(doc: Document): void {
+  try {
+    const panel = doc.querySelector('pixel-overlay-panel');
+    if (panel instanceof HTMLElement && panel.matches(':popover-open')) {
+      if (typeof panel.hidePopover === 'function' && typeof panel.showPopover === 'function') {
+        panel.hidePopover();
+        panel.showPopover();
+      }
+    }
   } catch (err) {
     console.warn('[pixel-overlay]', err);
   }

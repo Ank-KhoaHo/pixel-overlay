@@ -184,6 +184,27 @@ export default defineBackground(() => {
     try {
       if (!isMessage(msg)) return;
 
+      if (msg.type === 'po/host-css') {
+        try {
+          if (sender.tab?.id !== undefined) {
+            const css =
+              'pixel-overlay-layers::backdrop, pixel-overlay-fixed::backdrop, pixel-overlay-panel::backdrop { display: none !important; }';
+            void browser.scripting
+              .insertCSS({
+                target: { tabId: sender.tab.id, frameIds: [sender.frameId ?? 0] },
+                origin: 'USER',
+                css,
+              })
+              .catch((err) => {
+                console.warn('[pixel-overlay]', err);
+              });
+          }
+        } catch (err) {
+          console.warn('[pixel-overlay]', err);
+        }
+        return;
+      }
+
       if (msg.type === 'po/side-panel') {
         const tabId = sender.tab?.id;
         if (tabId !== undefined) {

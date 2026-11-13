@@ -21,6 +21,7 @@ import {
 import { appendLayers, parseImport, prepareImport } from '../core/transfer';
 import type { Blend, Layer, LayerPatch, NewLayer, SiteState } from '../core/types';
 import { mountLayers } from '../overlay/layers';
+import { getScrollOffset } from '../overlay/scroll';
 import { mountPanel, type PanelView } from '../panel/mountPanel';
 import { newId } from '../shared/ids';
 import { chromeLocalArea, createSiteStore } from '../shared/store';
@@ -56,7 +57,7 @@ export default defineContentScript({
 
       try {
         for (const el of Array.from(
-          document.querySelectorAll('pixel-overlay-layers, pixel-overlay-panel'),
+          document.querySelectorAll('pixel-overlay-layers, pixel-overlay-fixed, pixel-overlay-panel'),
         )) {
           el.remove();
         }
@@ -67,6 +68,14 @@ export default defineContentScript({
 
     win.__pixelOverlay = true;
     win.__pixelOverlayAlive = isAlive;
+
+    try {
+      void browser.runtime.sendMessage({ type: 'po/host-css' }).catch((err) => {
+        console.warn('[pixel-overlay]', err);
+      });
+    } catch (err) {
+      console.warn('[pixel-overlay]', err);
+    }
 
     try {
       const site = siteOf(location.href) ?? location.origin;
@@ -198,8 +207,7 @@ export default defineContentScript({
           if (patch.fixed !== undefined) {
             const currentLayer = currentState.layers.find((l) => l.id === id);
             if (currentLayer && currentLayer.fixed !== patch.fixed) {
-              const sx = window.scrollX;
-              const sy = window.scrollY;
+              const { x: sx, y: sy } = getScrollOffset(document);
               const curX = patch.x !== undefined ? patch.x : currentLayer.x;
               const curY = patch.y !== undefined ? patch.y : currentLayer.y;
               if (patch.fixed) {

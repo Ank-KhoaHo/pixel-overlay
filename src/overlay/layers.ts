@@ -3,7 +3,10 @@ import { snap } from '../core/align';
 import { inFilter } from '../core/state';
 import { keyToNudge } from '../core/keys';
 import { shadowModeFor } from './shadowMode';
-import { promoteToTopLayer } from './topLayer';
+import { promoteToTopLayer, raisePanel } from './topLayer';
+import { getScrollOffset, isBodyScroller } from './scroll';
+
+export { getScrollOffset, isBodyScroller } from './scroll';
 
 export interface LayersView {
   render(s: SiteState, images: Map<string, string>): void;
@@ -73,9 +76,14 @@ export function mountLayers(opts: {
         root.appendChild(fixedHost);
       }
     }
+    const hostWasOpen = typeof host.matches === 'function' && host.matches(':popover-open');
+    const fixedWasOpen = typeof fixedHost.matches === 'function' && fixedHost.matches(':popover-open');
     // A5: layers first, then the pinned host, so the top layer keeps that order.
     promoteToTopLayer(host);
     promoteToTopLayer(fixedHost);
+    if (!hostWasOpen || !fixedWasOpen) {
+      raisePanel(opts.doc);
+    }
   }
 
   attachHosts();
@@ -283,24 +291,15 @@ export function mountLayers(opts: {
 
   const handleBodyScroll = () => {
     try {
-      const body = opts.doc.body;
-      const docEl = opts.doc.documentElement;
-      if (!body || !docEl) return;
-      const bodyStyle = win.getComputedStyle(body);
-      const htmlStyle = win.getComputedStyle(docEl);
-      const bodyOverflowY = bodyStyle.overflowY;
-      const htmlOverflowY = htmlStyle.overflowY;
-      const isBodyScrollable =
-        (bodyOverflowY === 'auto' || bodyOverflowY === 'scroll') &&
-        (htmlOverflowY === 'hidden' || htmlOverflowY === 'clip');
-
-      if (isBodyScrollable) {
+      if (isBodyScroller(opts.doc)) {
+        const offset = getScrollOffset(opts.doc);
         host.style.setProperty(
           'transform',
-          `translate(${-body.scrollLeft}px, ${-body.scrollTop}px)`,
+          `translate(${-offset.x}px, ${-offset.y}px)`,
+          'important',
         );
       } else {
-        host.style.removeProperty('transform');
+        host.style.setProperty('transform', 'none', 'important');
       }
     } catch (err) {
       console.warn('[pixel-overlay]', err);

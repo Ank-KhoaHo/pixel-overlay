@@ -69,12 +69,14 @@ describe('Up and Down skip layers hidden by the filter', () => {
     return setFilter(s, 'x');
   }
 
-  it('Up swaps with the next shown layer above', () => {
-    expect(moveLayer(mixed(), 'A', 'up').layers.map((l) => l.id)).toEqual(['C', 'B', 'A']);
+  // B4 F5 replaced the in-place swap: the layer goes just past the next shown one, and the
+  // hidden layer between them keeps its place relative to that one.
+  it('Up moves just above the next shown layer above', () => {
+    expect(moveLayer(mixed(), 'A', 'up').layers.map((l) => l.id)).toEqual(['B', 'C', 'A']);
   });
 
-  it('Down swaps with the next shown layer below', () => {
-    expect(moveLayer(mixed(), 'C', 'down').layers.map((l) => l.id)).toEqual(['C', 'B', 'A']);
+  it('Down moves just below the next shown layer below', () => {
+    expect(moveLayer(mixed(), 'C', 'down').layers.map((l) => l.id)).toEqual(['C', 'A', 'B']);
   });
 
   it('with no shown layer that way, nothing changes', () => {
