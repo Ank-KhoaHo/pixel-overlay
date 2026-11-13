@@ -189,7 +189,7 @@ export function AddImage({
         onChange={handleImportChange}
       />
       {error ? (
-        <div data-po="error" className="panel-error">
+        <div data-po="error" role="alert" className="panel-error">
           {error}
         </div>
       ) : null}

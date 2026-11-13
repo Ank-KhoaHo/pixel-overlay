@@ -181,8 +181,11 @@ export function LayerControls({
   return (
     <div className="panel-controls-section">
       <div className="control-row">
-        <span className="control-label">Opacity</span>
+        <label htmlFor="po-control-opacity" className="control-label">
+          Opacity
+        </label>
         <NumberInput
+          id="po-control-opacity"
           data-po="opacity"
           className="control-input-num"
           value={opacityPercent}
@@ -194,6 +197,7 @@ export function LayerControls({
         <input
           type="range"
           data-po="opacity-slider"
+          aria-label="Opacity"
           className="control-slider"
           min={0}
           max={100}
@@ -237,8 +241,11 @@ export function LayerControls({
       </div>
 
       <div className="control-row">
-        <span className="control-label">Scale</span>
+        <label htmlFor="po-control-scale" className="control-label">
+          Scale
+        </label>
         <NumberInput
+          id="po-control-scale"
           data-po="scale"
           className="control-input-num"
           value={layer.scale}
@@ -284,7 +291,7 @@ export function LayerControls({
           aria-pressed={layer.locked ? 'true' : 'false'}
           onClick={() => onUpdateLayer(layer.id, { locked: !layer.locked })}
         >
-          {layer.locked ? 'Locked' : 'Unlocked'}
+          Lock
         </button>
       </div>
 

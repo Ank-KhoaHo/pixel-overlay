@@ -71,6 +71,19 @@ export function LayerList({
   const [draftName, setDraftName] = useState('');
   const [armedDeleteId, setArmedDeleteId] = useState<string | null>(null);
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nameButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const returnFocusIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (returnFocusIdRef.current && editingId === null) {
+      const id = returnFocusIdRef.current;
+      const btn = nameButtonRefs.current.get(id);
+      if (btn) {
+        btn.focus();
+        returnFocusIdRef.current = null;
+      }
+    }
+  });
 
   useEffect(() => {
     return () => {
@@ -131,6 +144,7 @@ export function LayerList({
         <div className="panel-filter-row">
           <select
             data-po="group-filter"
+            aria-label="Show group"
             className="group-filter-select"
             value={filter}
             onChange={(e) => onSetFilter?.(e.target.value)}
@@ -175,15 +189,18 @@ export function LayerList({
               <input
                 type="text"
                 className="layer-rename-input"
+                aria-label="Layer name"
                 autoFocus
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
+                    returnFocusIdRef.current = layer.id;
                     handleCommitRename(layer.id);
                   } else if (e.key === 'Escape') {
                     e.preventDefault();
+                    returnFocusIdRef.current = layer.id;
                     setEditingId(null);
                   }
                 }}
@@ -191,22 +208,43 @@ export function LayerList({
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
-              <span
+              <button
+                type="button"
+                ref={(el) => {
+                  if (el) {
+                    nameButtonRefs.current.set(layer.id, el);
+                  } else {
+                    nameButtonRefs.current.delete(layer.id);
+                  }
+                }}
+                data-po="layer-name"
                 className="layer-name"
                 title={layer.name}
+                aria-current={isActive ? 'true' : undefined}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectLayer(layer.id);
+                }}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   handleStartRename(layer);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'F2') {
+                    e.preventDefault();
+                    handleStartRename(layer);
+                  }
+                }}
               >
                 {layer.name}
-              </span>
+              </button>
             )}
 
             <button
               type="button"
               data-po="eye"
               className="layer-row-btn"
+              aria-label={layer.visible ? `Hide ${layer.name}` : `Show ${layer.name}`}
               title={layer.visible ? 'Hide layer' : 'Show layer'}
               onClick={(e) => {
                 e.stopPropagation();
@@ -220,6 +258,7 @@ export function LayerList({
               type="button"
               data-po="up"
               className="layer-row-btn"
+              aria-label={`Move ${layer.name} up`}
               title="Move layer up"
               onClick={(e) => {
                 e.stopPropagation();
@@ -233,6 +272,7 @@ export function LayerList({
               type="button"
               data-po="down"
               className="layer-row-btn"
+              aria-label={`Move ${layer.name} down`}
               title="Move layer down"
               onClick={(e) => {
                 e.stopPropagation();
@@ -246,6 +286,7 @@ export function LayerList({
               type="button"
               data-po="delete"
               className={isArmed ? 'layer-row-btn armed-delete' : 'layer-row-btn'}
+              aria-label={isArmed ? `Click again to delete ${layer.name}` : `Delete ${layer.name}`}
               title={isArmed ? 'Confirm delete' : 'Delete layer'}
               onClick={(e) => handleDeleteClick(e, layer.id)}
             >

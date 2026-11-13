@@ -334,6 +334,8 @@ export function Panel({
       ref={rootRef}
       className={mode === 'side' ? 'pixel-overlay-panel-root side-mode' : 'pixel-overlay-panel-root'}
       tabIndex={0}
+      role="region"
+      aria-label="Pixel Veil"
       onPaste={handlePaste}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
@@ -351,7 +353,7 @@ export function Panel({
         onPointerUp={mode === 'side' ? undefined : handleHeaderPointerUp}
         onPointerCancel={mode === 'side' ? undefined : handleHeaderPointerUp}
       >
-        <span data-po="title" className="panel-title">
+        <span role="heading" aria-level={2} data-po="title" className="panel-title">
           Pixel Veil
         </span>
         <div className="panel-header-buttons">
@@ -381,6 +383,8 @@ export function Panel({
                 type="button"
                 data-po="collapse"
                 className="panel-header-btn"
+                aria-label={state.panel.collapsed ? 'Expand panel' : 'Collapse panel'}
+                aria-expanded={!state.panel.collapsed}
                 title={state.panel.collapsed ? 'Expand panel' : 'Collapse panel'}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -393,6 +397,7 @@ export function Panel({
                 type="button"
                 data-po="close"
                 className="panel-header-btn"
+                aria-label="Close panel"
                 title="Close panel"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -443,6 +448,7 @@ export function Panel({
             <div className="panel-compare-row">
               <select
                 data-po="blend-mode"
+                aria-label="Blend mode"
                 disabled={!hasLayers}
                 value={state.blend}
                 onChange={(e) => onSetBlend(e.target.value as Blend)}
