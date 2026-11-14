@@ -8,18 +8,22 @@ just the mechanics of building and testing it.
 
 ## Building and testing
 
-You need Node 24 and Python 3.12 (for the docs guard).
+You need Node 24 and Python 3.12 with pytest.
 
 ```
 npm ci
 npx playwright install chromium
-bash scripts/check.sh
+python scripts/check.py
 ```
 
-`scripts/check.sh` is the whole gate, the same steps CI runs: TypeScript, the store build (which
-must carry no `host_permissions`), a separate end-to-end build, unit tests (Vitest), browser
-tests in a real Chromium with the unpacked extension (Playwright), and the docs guard. **Any
-skipped test fails the gate**: a skip is an assertion that did not run.
+`scripts/check.py` is the whole gate, and CI runs this same script. In order: the Python tests
+(the docs guard and the scripts' own tests), TypeScript, the store build (which must ask for no
+site at install, with one version in `package.json`, `VERSION` and the manifest), a separate
+end-to-end build, the Firefox build and Mozilla's linter, unit tests (Vitest), and browser tests
+in a real Chromium with the unpacked extension (Playwright). **Any skipped test fails the
+gate**: a skip is an assertion that did not run. Every step has a time limit, and a step that
+runs past it is stopped with every process it started. `python scripts/check.py --list` prints
+the steps and runs nothing.
 
 The end-to-end build (`npm run build:e2e`, output `.output/chrome-mv3-e2e`) adds `localhost`
 access so the tests can skip Chrome's permission prompt. Never load or ship that build as the

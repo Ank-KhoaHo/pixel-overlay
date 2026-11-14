@@ -29,7 +29,8 @@ import json, sys, time
 from pathlib import Path
 
 tool, args = sys.argv[1], sys.argv[2:]
-key = "typecheck" if "typecheck" in args else "build" if "build" in args else "vitest" if "vitest" in args else "playwright"
+key = ("typecheck" if "typecheck" in args else "build" if any(a.split(":")[0] == "build" for a in args)
+       else "vitest" if "vitest" in args else "lint" if "web-ext" in args else "playwright")
 plan = json.loads(Path("fake-node.json").read_text(encoding="utf-8")).get(key, {"out": "", "exit": 0})
 print(tool, " ".join(args), flush=True)
 if plan.get("hang"):
@@ -80,11 +81,53 @@ def _project(folder: Path, monkeypatch, *, plan: dict | None = None, manifest: d
     ("build", "npm run --silent build"),
     ("unit", "npx vitest run"),
     ("browser", "npx playwright test"),
+    ("e2e-build", "npm run --silent build:e2e"),
 ])
 def test_each_step_starts_its_own_command_and_shows_what_it_printed(monkeypatch, tmp_path, capsys, name, words):
     _project(tmp_path, monkeypatch)
     assert step.main([name]) == 0
     assert words in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------- the Firefox build
+
+
+def _firefox_build(root: Path, manifest: dict | None) -> None:
+    built = root / ".output" / "firefox-mv3"
+    built.mkdir(parents=True, exist_ok=True)
+    if manifest is not None:
+        (built / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8", newline="\n")
+
+
+def test_the_firefox_step_builds_then_lints(monkeypatch, tmp_path, capsys):
+    root = _project(tmp_path, monkeypatch)
+    _firefox_build(root, MANIFEST)
+    assert step.main(["firefox"]) == 0
+    out = capsys.readouterr().out
+    assert out.index("npm run --silent build:firefox") < out.index("npx web-ext lint --source-dir .output/firefox-mv3")
+
+
+def test_a_firefox_build_that_asks_for_a_site_fails_before_the_linter_runs(monkeypatch, tmp_path, capsys):
+    root = _project(tmp_path, monkeypatch)
+    _firefox_build(root, {**MANIFEST, "host_permissions": ["<all_urls>"]})
+    assert step.main(["firefox"]) == 1
+    out = capsys.readouterr().out
+    assert "Firefox build asks for site access" in out and "<all_urls>" in out
+    assert "web-ext" not in out, "the linter ran on a build that had already failed"
+
+
+def test_a_firefox_build_with_no_manifest_is_a_problem_not_a_pass(monkeypatch, tmp_path):
+    root = _project(tmp_path, monkeypatch)
+    _firefox_build(root, None)
+    problems = step.firefox_problems(root)
+    assert len(problems) == 1 and "manifest.json" in problems[0]
+
+
+def test_the_linters_own_failure_fails_the_step(monkeypatch, tmp_path, capsys):
+    root = _project(tmp_path, monkeypatch, plan={"lint": {"out": "errors 1", "exit": 1}})
+    _firefox_build(root, MANIFEST)
+    assert step.main(["firefox"]) == 1
+    assert "web-ext lint" in capsys.readouterr().out, "the step failed before the linter ran"
 
 
 def test_a_command_that_fails_fails_the_step_with_its_own_exit_code(monkeypatch, tmp_path, capsys):
@@ -284,17 +327,15 @@ def test_each_step_gives_up_before_the_gate_does():
     import re
     gate = ROOT / "scripts" / "check.py"                 # in a project
     fragment = ROOT.parent / "gate-steps.txt"            # where the pack lies, in the template
-    shell = ROOT / "scripts" / "check.sh"                # this project's gate, until check.py replaces it
-    if not gate.is_file() and not fragment.is_file():
-        # The shell gate gives no step a limit of its own, so the step's limit is the only
-        # one and always comes first. What can still go wrong is a step run outside the
-        # script, with no limit at all: every one of the five must go through it.
-        steps = set(re.findall(r"scripts/extension_step\.py (\w+)", shell.read_text(encoding="utf-8")))
-        assert steps == {"typecheck", "build", "checks", "unit", "browser"}, steps
-        return
+    shell = ROOT / "scripts" / "check.sh"                # the old gate, kept while the two are compared
     text = (gate if gate.is_file() else fragment).read_text(encoding="utf-8")
-    limits = dict(re.findall(r'"scripts/extension_step\.py", "(\w+)"\], timeout=(\d+)', text))
-    assert set(limits) == {"typecheck", "build", "checks", "unit", "browser"}, limits
+    limits = dict(re.findall(r'"scripts/extension_step\.py", "([\w-]+)"\], timeout=(\d+)', text))
+    every_step = set(step.LIMITS) | {"checks"}
+    assert set(limits) == every_step, limits
+    if shell.is_file():
+        # The shell gate gives no step a limit of its own: each must still go through the script.
+        through = set(re.findall(r"scripts/extension_step\.py ([\w-]+)", shell.read_text(encoding="utf-8")))
+        assert through == every_step, through
     for name, own in step.LIMITS.items():
         assert own < int(limits[name]), f"{name}: the step's own limit ({own} s) is not below the gate's ({limits[name]} s)"
 

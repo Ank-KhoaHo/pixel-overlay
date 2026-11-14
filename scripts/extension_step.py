@@ -5,9 +5,13 @@
     python scripts/extension_step.py checks        reads what the build wrote; starts nothing
     python scripts/extension_step.py unit          npx vitest run
     python scripts/extension_step.py browser       npx playwright test
+    python scripts/extension_step.py e2e-build     npm run --silent build:e2e
+    python scripts/extension_step.py firefox       the Firefox build, its site access, Mozilla's linter
 
-scripts/check.py runs these five, in that order, after the tests. The build comes before
-the checks and the tests because both read what it wrote.
+scripts/check.py runs these, after the tests: typecheck, build, checks, e2e-build, firefox,
+unit, browser. The builds come before the checks and the tests because both read what they
+wrote. The browser tests load the e2e build, which adds the local sites Playwright needs and
+is never shipped.
 
 WHAT THE STEPS MUST NEVER DO IS REPORT A PASS THAT IS NOT ONE. Three ways it happens:
 
@@ -52,11 +56,18 @@ COMMANDS: dict[str, list[str]] = {
     "build": ["npm", "run", "--silent", "build"],
     "unit": ["npx", "vitest", "run"],
     "browser": ["npx", "playwright", "test"],
+    "e2e-build": ["npm", "run", "--silent", "build:e2e"],
+    "firefox": ["npm", "run", "--silent", "build:firefox"],
 }
+
+# Where the Firefox build is written. The same rule as the store build: no site at install.
+FIREFOX_BUILD = ".output/firefox-mv3"
+LINT = ["npx", "web-ext", "lint", "--source-dir", FIREFOX_BUILD]
 
 # Seconds. Each is below the limit scripts/check.py gives the same step, so that this
 # script is the one that stops, and it stops everything it started.
-LIMITS: dict[str, int] = {"typecheck": 240, "build": 540, "unit": 540, "browser": 1700}
+LIMITS: dict[str, int] = {"typecheck": 240, "build": 540, "unit": 540, "browser": 1700,
+                          "e2e-build": 540, "firefox": 540}
 
 _SKIP_WORDS = {"unit": r"skipped|todo", "browser": r"skipped"}
 
@@ -221,7 +232,8 @@ def _run(command: list[str], limit: int) -> tuple[int | None, str]:
 def main(argv: list[str] | None = None) -> int:
     """Run one step. Returns 0 only when it passed: the gate reads the exit code."""
     parser = argparse.ArgumentParser(description="The gate's steps for a browser extension.")
-    parser.add_argument("step", choices=["typecheck", "build", "checks", "unit", "browser"])
+    parser.add_argument("step", choices=["typecheck", "build", "checks", "unit", "browser",
+                                         "e2e-build", "firefox"])
     step = parser.parse_args(argv).step
 
     # The pack was installed and the extension was not created yet. That is a failure with
@@ -259,7 +271,40 @@ def main(argv: list[str] | None = None) -> int:
     if not_run:
         _say(f"FAIL: {not_run}. A test that did not run is not a test that passed")
         return 1
+    if step == "firefox":
+        return _firefox_after_build()
     return 0
+
+
+def firefox_problems(root: Path) -> list[str]:
+    """What is wrong with the Firefox build, as sentences: the same site-access rule as the store build."""
+    built = root / FIREFOX_BUILD / "manifest.json"
+    manifest = _json_object(built)
+    if manifest is None:
+        return [f"{FIREFOX_BUILD}/manifest.json is not there, or is not JSON: the Firefox build did not write it"]
+    asked = [pattern for pattern in site_access(manifest) if pattern not in ALLOWED_SITE_ACCESS]
+    if asked:
+        return [f"the Firefox build asks for site access at install: {', '.join(asked)}"]
+    return []
+
+
+def _firefox_after_build() -> int:
+    """The Firefox build's manifest, then Mozilla's own linter: the validator its store runs."""
+    problems = firefox_problems(ROOT)
+    for problem in problems:
+        _say(f"FAIL: {problem}")
+    if problems:
+        return 1
+    try:
+        command = tool(LINT[0]) + LINT[1:]
+    except FileNotFoundError as missing:
+        _say(str(missing))
+        return 1
+    code, _ = _run(command, LIMITS["firefox"])
+    if code is None:
+        _say(f"FAIL: the Firefox linter ran past its time limit of {LIMITS['firefox']} s and was stopped")
+        return 1
+    return code
 
 
 if __name__ == "__main__":

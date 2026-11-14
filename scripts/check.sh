@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# The full local gate for pixel-overlay. CI runs the same steps (.github/workflows/ci.yml).
+# The old local gate for pixel-overlay, kept while it and scripts/check.py are compared.
+# scripts/check.py is the gate, and what CI runs. Both run the same steps.
 # Fails on any skipped test: a skip is an assertion that did not run.
 #
 # The store build's steps go through scripts/extension_step.py: each has a time limit, a
@@ -24,14 +25,10 @@ step "extension checks (no site access at install, one version in three places)"
 $PY scripts/extension_step.py checks
 
 step "the e2e test build"
-npm run --silent build:e2e > .check/build-e2e.out
+$PY scripts/extension_step.py e2e-build > .check/build-e2e.out
 
-step "Firefox build, then Mozilla's linter (the validator AMO runs)"
-npm run --silent build:firefox > .check/build-firefox.out
-if grep -q '"host_permissions"' .output/firefox-mv3/manifest.json; then
-  echo "FAIL: the Firefox build has host_permissions"; exit 1
-fi
-npx web-ext lint --source-dir .output/firefox-mv3 2>&1 | tee .check/webext-lint.out
+step "Firefox build, its site access, then Mozilla's linter (the validator AMO runs)"
+$PY scripts/extension_step.py firefox 2>&1 | tee .check/webext-lint.out
 
 step "unit (vitest)"
 $PY scripts/extension_step.py unit 2>&1 | tee .check/vitest.out
