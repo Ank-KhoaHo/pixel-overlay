@@ -43,7 +43,7 @@ These are the promises a report can break:
 ### Not findings
 
 These are known limits, not bugs. A report is welcome only if it shows the real behaviour is
-worse than what is written here or in the [README](README.md#limits).
+worse than what is written here, in the [README](README.md#limits) or in the [ROADMAP](ROADMAP.md).
 
 - **A page can tell the extension is there.** The two host elements
   (`<pixel-overlay-layers>` and `<pixel-overlay-panel>`) are in the page's DOM, with their size and

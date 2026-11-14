@@ -22,8 +22,11 @@ site at install, with one version in `package.json`, `VERSION` and the manifest)
 end-to-end build, the Firefox build and Mozilla's linter, unit tests (Vitest), and browser tests
 in a real Chromium with the unpacked extension (Playwright). **Any skipped test fails the
 gate**: a skip is an assertion that did not run. Every step has a time limit, and a step that
-runs past it is stopped with every process it started. `python scripts/check.py --list` prints
-the steps and runs nothing.
+runs past it is stopped with every process it started. It stops at the first step that fails.
+`python scripts/check.py --list` prints the steps and runs nothing.
+
+CI runs on another operating system. A change that passes here has passed CI's steps on this
+machine only: a path separator, a line ending or the case of a file name can still differ there.
 
 The end-to-end build (`npm run build:e2e`, output `.output/chrome-mv3-e2e`) adds `localhost`
 access so the tests can skip Chrome's permission prompt. Never load or ship that build as the
@@ -44,6 +47,9 @@ git pull --rebase origin main
 
 Explain **why** a change was made, not just what changed — the diff already says what. Never
 add a `Co-Authored-By` trailer.
+
+**A commit message may name a ticket; code may not.** A ticket number in a comment or a test
+name points at notes a reader cannot open. Say in the comment what the code does and why.
 
 **Never summarise what a change hid.** If a commit touches anything this repository keeps
 private — see [PUBLIC.md](PUBLIC.md) — its message describes the change, not the material. A
