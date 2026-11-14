@@ -11,6 +11,8 @@ node_modules/
 .wxt/
 test-results/
 playwright-report/
+# What scripts/build_release.py writes for a release.
+/dist/
 
 # OS / editors
 .DS_Store
