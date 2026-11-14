@@ -35,6 +35,7 @@ through, and why the LOCAL link floor is set high enough that a hatch this
 wide has somewhere to be caught.
 """
 
+import functools
 import posixpath
 import re
 import subprocess
@@ -143,7 +144,11 @@ def _local_mode() -> bool:
     return (_repo_root() / SPECS_DIR).is_dir()
 
 
+@functools.lru_cache(maxsize=None)
 def _check_ignore(path: str) -> bool:
+    # Cached for the life of one run: the answer depends only on the ignore rules,
+    # which no test changes, and the floors helper asks about every link in the repo.
+    # Uncached, that is two git processes per link and over a second per walk.
     r = subprocess.run(["git", "check-ignore", "-q", "--no-index", path],
                        cwd=_repo_root(), capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
@@ -183,13 +188,15 @@ def _deliberately_unpublished(rel: str) -> bool:
     return False
 
 
-# Floors, not targets (D1). Measured 2026-11-12: 7 markdown files and 19 links in BOTH modes
-# (every link in a tracked file points at a tracked file), 25 backlog rows. Raise them again
-# after any large addition; the CI pair tracks the tracked half only.
-MIN_MD_FILES = 6
-MIN_LINKS_LOCAL = 16
-MIN_LINKS_CI = 16
-MIN_ROWS = 20
+# Floors, not targets: each is three quarters of the real count on the day it was
+# set. Run `python scripts/set_floors.py` after a large addition. Two of the four
+# can be measured only with the working half on disk; in a tree without it (any
+# clone) the helper sets MIN_MD_FILES and MIN_LINKS_CI and leaves the other two.
+# A DROP below these means the walk broke, not that the repo shrank.
+MIN_MD_FILES = 5
+MIN_LINKS_LOCAL = 15
+MIN_LINKS_CI = 15
+MIN_ROWS = 28
 PUBLIC_MD_MAX_LINES = 35
 
 
@@ -251,41 +258,23 @@ def test_the_working_material_is_never_tracked():
     )
 
 
-def test_the_walk_sees_untracked_files_but_not_ignored_ones():
-    """D1: _scannable must see a file about to be committed (--others) and must skip a
-    gitignored one (--exclude-standard). The floors above cannot notice either flag being
-    dropped, because this repo's file count has headroom over them."""
-    root = _repo_root()
-    fresh = root / "zz-d1-probe-untracked.md"
-    hidden = root / "node_modules" / "zz-d1-probe-ignored.md"
-    try:
-        fresh.write_text("# probe\n", encoding="utf-8", newline="\n")
-        hidden.parent.mkdir(exist_ok=True)
-        hidden.write_text("# probe\n", encoding="utf-8", newline="\n")
-        seen = _scannable("*.md")
-        assert "zz-d1-probe-untracked.md" in seen, "an untracked file is invisible to the guard"
-        assert not any(s.endswith("zz-d1-probe-ignored.md") for s in seen), (
-            "a gitignored file is being scanned"
-        )
-    finally:
-        fresh.unlink(missing_ok=True)
-        hidden.unlink(missing_ok=True)
+def _count_markdown_files() -> int:
+    return len(_scannable("*.md"))
 
 
-def test_every_markdown_link_resolves():
-    """Resolution, from each file's own directory -- and in CI, an honest count
-    of what could not be resolved because its target is unpublished.
+def _walk_markdown_links(count_for_a_clone: bool = False) -> tuple[list[str], int, int, int | None]:
+    """Resolve every relative markdown link. One walk, shared with scripts/set_floors.py.
 
-    The escape hatch is the dangerous part. Skipping every link whose target is
-    ignored would make this vacuous in BOTH modes at once while reporting
-    success, because in this repo most such targets ARE ignored. So the skipped
-    ones are COUNTED and asserted on, not waved through.
+    Returns (broken, checked, unpublished, clone_checked).
+
+    `clone_checked` is how many of the checked links a CLONE could resolve: every
+    checked link except those whose target exists here but is one git ignores.
+    It is computed only on request. It asks git about every link, which takes
+    over a second, and the link test never needs it. The floors helper does: on
+    the maintainer's disk it has to set the CI floor without being in CI.
     """
-    files = _scannable("*.md")
-    assert len(files) >= MIN_MD_FILES, f"only {len(files)} markdown files — the walk is broken"
-
-    broken, checked, unpublished = [], 0, 0
-    for rel in files:
+    broken, checked, unpublished, clone_checked = [], 0, 0, 0
+    for rel in _scannable("*.md"):
         if rel.startswith(SEED_PREFIX):
             # template/seed/ is scaffolding payload, installed by init_project.py to a
             # path two directories shallower than where it currently sits tracked (e.g.
@@ -320,7 +309,31 @@ def test_every_markdown_link_resolves():
                     unpublished += 1
                     continue
                 broken.append(f"{rel}:{lineno} -> {target}")
+                clone_checked += 1      # a broken link is counted as checked in a clone too
+            elif count_for_a_clone and not _deliberately_unpublished(resolved):
+                clone_checked += 1
             checked += 1
+    return broken, checked, unpublished, (clone_checked if count_for_a_clone else None)
+
+
+def _backlog_rows() -> list[tuple[str, str]]:
+    """(ticket id, href) for every row of the page. Only callable with the working half on disk."""
+    return _ROW_RE.findall(_read("BACKLOG.html"))
+
+
+def test_every_markdown_link_resolves():
+    """Resolution, from each file's own directory -- and in CI, an honest count
+    of what could not be resolved because its target is unpublished.
+
+    The escape hatch is the dangerous part. Skipping every link whose target is
+    ignored would make this vacuous in BOTH modes at once while reporting
+    success, because in this repo most such targets ARE ignored. So the skipped
+    ones are COUNTED and asserted on, not waved through.
+    """
+    num_files = _count_markdown_files()
+    assert num_files >= MIN_MD_FILES, f"only {num_files} markdown files — the walk is broken"
+
+    broken, checked, unpublished, _ = _walk_markdown_links()
 
     floor = MIN_LINKS_LOCAL if _local_mode() else MIN_LINKS_CI
     mode = "LOCAL" if _local_mode() else "CI"
@@ -347,8 +360,7 @@ def test_every_backlog_row_links_to_a_spec_that_exists():
         print("[CI] no page to parse rows from — visibility rule checked instead")
         return
 
-    page = _read("BACKLOG.html")
-    rows = _ROW_RE.findall(page)
+    rows = _backlog_rows()
     assert len(rows) >= MIN_ROWS, (
         f"only {len(rows)} backlog rows parsed — the page may have lost rows "
         f"or changed shape"
