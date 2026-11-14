@@ -26,14 +26,13 @@
   <a href="https://ank-khoaho.github.io/pixel-overlay/">Drag the line yourself</a> on the project page.</sub>
 </p>
 
----
+Pixel Veil is a free Chrome extension for front-end developers who build pages from a design export:
+a Figma frame as a PNG, a screenshot, anything that is an image. It costs nothing, needs no account,
+and reads no site until you click its icon.
 
 You know the moment. The page is done, the designer opens it next to the mockup, squints, and says the
 heading is "a little low". A little. Pixel Veil puts the mockup on top of your page, so you see
 "a little" in pixels, before anyone else does.
-
-It is a free Chrome extension for front-end developers who build pages from a design export: a Figma
-frame as a PNG, a screenshot, anything that is an image.
 
 ## What it does
 
@@ -45,9 +44,9 @@ frame as a PNG, a screenshot, anything that is an image.
 </p>
 
 Drop an image on the panel, line it up with drag, arrow keys, **Center** or **Fit width**, then switch to
-**Difference**. Keep desktop, tablet and mobile designs side by side, group them per page, pin a sticky
-header's design to the window, and move the controls into Chrome's side panel when they cover a narrow
-page.
+**Difference**. Keep desktop, tablet and mobile designs side by side, and group them per page. Pin a
+sticky header's design to the window. Move the controls into Chrome's side panel when they cover a
+narrow page.
 
 ## It asks for as little as it can
 
@@ -121,6 +120,30 @@ a screen reader reads.
   Pixel Veil opens a page that shows how. Layers are kept per folder there, and **Keep on this site** is off.
 - A layer pinned to the window is always drawn above the layers that scroll with the page.
 - Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
+
+## Status
+
+Version 0.2.2, before its first Store release. What has really been tried:
+
+| What | How it was tried |
+|---|---|
+| Chromium on Windows | 117 end-to-end tests drive the built extension |
+| Chromium on Linux | the same tests, on every push, in CI |
+| Edge | not tried; it is the same build |
+| Firefox 140+ | built, and passes Mozilla's own linter; not yet run in Firefox |
+| Chrome Web Store | listing in preparation |
+
+## Alternatives
+
+Pixel Veil is the right tool when you hold an image of the design and a page to check against it.
+Something else is better in these cases:
+
+- **You measure spacing, not compare a picture.** Your design tool's own inspect or developer mode
+  gives exact sizes, and your browser's DevTools give the page's.
+- **You want a test to fail when a page changes.** A screenshot test, such as Playwright's
+  `toHaveScreenshot`, compares every build without a person looking.
+- **You need the overlay in a browser other than Chrome, Edge or Firefox.** Look for an overlay
+  extension in that browser's own store.
 
 ## FAQ
 
