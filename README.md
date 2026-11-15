@@ -1,11 +1,9 @@
-<p align="center">
-  <img src="art/icon.svg" width="112" alt="Pixel Veil icon: four tiles under an orange veil">
-</p>
-
-<h1 align="center">Pixel Veil</h1>
+<h1 align="center">
+  <img src="art/banner.png" width="880" alt="Pixel Veil: lay your design over the page you built.">
+</h1>
 
 <p align="center">
-  <em>Lay your design over the page you built. Every pixel that disagrees shows.</em>
+  <em>Every pixel that disagrees shows.</em>
 </p>
 
 <p align="center">
@@ -174,6 +172,8 @@ ones that should not.
 | [PUBLIC.md](PUBLIC.md) | why some material is deliberately not published here |
 | [site/](site/index.html) | the project page, served by GitHub Pages |
 | [art/icon.svg](art/icon.svg) | the icon; `node scripts/make_icons.mjs` renders the PNGs in `public/icon/` |
+| [art/banner.png](art/banner.png) | the banner this README opens with |
+| [art/cover.png](art/cover.png) | the cover: the Chrome Web Store's small tile, 440&times;280 |
 
 The repository keeps its first working name, `pixel-overlay`.
 
