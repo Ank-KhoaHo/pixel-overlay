@@ -160,7 +160,6 @@ _ROW_RE = re.compile(r'<tr data-id="([^"]+)"><td class="id"><a href="([^"]+)"')
 
 
 SPECS_DIR = "docs/superpowers/specs"
-SEED_PREFIX = "template/seed/"
 
 
 def _local_mode() -> bool:
@@ -309,20 +308,7 @@ def _walk_markdown_links(count_for_a_clone: bool = False) -> tuple[list[str], in
     """
     broken, checked, unpublished, clone_checked = [], 0, 0, 0
     for rel in _scannable("*.md"):
-        if rel.startswith(SEED_PREFIX):
-            # template/seed/ is scaffolding payload, installed by init_project.py to a
-            # path two directories shallower than where it currently sits tracked (e.g.
-            # template/seed/docs/knowledge/README.md becomes docs/knowledge/README.md at
-            # the repository root). Its relative links are authored for THAT destination,
-            # not for the path this walk finds it at -- so resolution below uses the
-            # POST-INSTALL path as the base, not the tracked one. Resolving against the
-            # tracked path would flag every seed link as broken; resolving against the
-            # install destination checks what the link actually means, including letting
-            # a target that is legitimately gitignored post-install (BACKLOG.html,
-            # docs/knowledge/, ...) reach the escape hatch below like any other link.
-            base = Path(rel[len(SEED_PREFIX):]).parent
-        else:
-            base = Path(rel).parent
+        base = Path(rel).parent
         for lineno, target in _iter_markdown_links(_read(rel)):
             if re.match(r"^(?:https?:|mailto:|#)", target):
                 continue

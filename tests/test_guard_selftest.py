@@ -467,8 +467,7 @@ def test_every_placeholder_in_the_tree_is_one_the_guard_looks_for():
     list. Forget the list, and a project where the token was never filled in passes.
 
     After a project is made there is no token left, and this has nothing to compare; it is
-    the template, where a placeholder is introduced, that it protects. The seed is read too:
-    init fills the same tokens there as it installs it.
+    the template, where a placeholder is introduced, that it protects.
     """
     token = re.compile(r"<[A-Z]+(?:[_-][A-Z]+)+>")
     known = set(guard.PLACEHOLDERS) | {guard.LICENCE_TOKEN}
@@ -476,7 +475,7 @@ def test_every_placeholder_in_the_tree_is_one_the_guard_looks_for():
                              ".gitignore", ".gitattributes", ".editorconfig")
     read, unknown = 0, set()
     for rel in files:
-        if rel in guard.PLACEHOLDER_EXEMPT or (rel.startswith("template/") and not rel.startswith(guard.SEED_PREFIX)):
+        if rel in guard.PLACEHOLDER_EXEMPT:
             continue
         read += 1
         unknown |= {found for found in token.findall(guard._read(rel)) if found not in known}

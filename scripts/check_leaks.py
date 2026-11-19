@@ -129,9 +129,9 @@ GITIGNORE_INVENTORY = [
 def _run(*args: str) -> str:
     # encoding="utf-8" is required, not cosmetic: text=True with no encoding=
     # falls back to the locale codec (cp1252 on this maintainer's Windows), and
-    # template/seed/CLAUDE.md's own headings open with U+26A0 U+FE0F -- the
-    # trailing byte of that pair is undefined in cp1252, so decoding raises
-    # UnicodeDecodeError the moment that shipped file is staged. errors="replace"
+    # a heading that opens with U+26A0 U+FE0F (the warning sign) has a trailing
+    # byte that is undefined in cp1252, so decoding raises UnicodeDecodeError the
+    # moment such a file is staged. errors="replace"
     # keeps a genuinely undecodable byte from crashing the scan outright; losing
     # one character's fidelity in a diff we only regex against costs nothing.
     r = subprocess.run(args, cwd=ROOT, capture_output=True, text=True,
