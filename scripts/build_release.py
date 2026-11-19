@@ -1,6 +1,8 @@
 """Build what a release attaches: from the tag, and from nothing else.
 
-    python scripts/build_release.py v1.2.3      writes dist/<project>-1.2.3-source.zip
+    python scripts/build_release.py v1.2.3      writes dist/<project>-1.2.3-source.zip,
+                                                dist/<project>-1.2.3-chrome.zip
+                                                and dist/<project>-1.2.3-firefox.zip
 
 .github/workflows/release.yml runs this after every check has passed, and attaches whatever
 is in dist/ to a draft release.
@@ -126,6 +128,45 @@ def build(root: Path, tag: str) -> Path:
     return archive
 
 
+# The store builds: the extension each browser's store gets, zipped by the bundler. Their names
+# are the bundler's: the project, the version from package.json, and the browser.
+STORE_ZIP = ".output/{project}-{version}-{browser}.zip"
+
+# The npm script that zips each browser's build. Firefox's also writes a sources zip beside it;
+# that one packs gitignored files and is never attached (the source zip above is the tag's).
+ZIP_SCRIPTS = {"chrome": "zip", "firefox": "zip:firefox"}
+
+
+def _zip_command(browser: str) -> list[str]:
+    """The bundler's zip command for one browser, through npm. Replaced in the tests by a stand-in."""
+    npm = shutil.which("npm")
+    if not npm:
+        raise SystemExit("npm was not found on PATH: the store build needs Node")
+    return [npm, "run", "--silent", ZIP_SCRIPTS[browser]]
+
+
+def build_store(root: Path, version: str, browser: str) -> Path:
+    """Zip one browser's build with the bundler and copy the zip into dist/. Return its path.
+
+    Run after build(), which empties dist/ and checks the tag. The bundler zips the tree as it
+    is checked out: in the release workflow that is the tag. The zip must carry the tag's
+    version in its name, which the bundler takes from package.json; a different name means
+    package.json and the tag disagree, and nothing is copied.
+    """
+    root = Path(root)
+    done = subprocess.run(_zip_command(browser), cwd=root, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace")
+    if done.returncode != 0:
+        raise SystemExit(f"the bundler's {browser} zip failed: {(done.stderr or done.stdout).strip()}")
+    made = root / STORE_ZIP.format(project=project_name(root), version=version, browser=browser)
+    if not made.is_file():
+        raise SystemExit(f"{made.relative_to(root).as_posix()} was not made: does package.json "
+                         f"say version {version}?")
+    target = root / "dist" / made.name
+    shutil.copyfile(made, target)
+    return target
+
+
 def main(argv: list[str] | None = None) -> int:
     """Entry point for the release build command line tool.
 
@@ -139,9 +180,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     archive = build(ROOT, args.tag)
-    relative = archive.relative_to(ROOT).as_posix()
-    size = archive.stat().st_size
-    print(f"{relative} ({size} bytes)")
+    version = release_notes.version_of(args.tag)
+    stores = [build_store(ROOT, version, browser) for browser in ZIP_SCRIPTS]
+    for made in (archive, *stores):
+        print(f"{made.relative_to(ROOT).as_posix()} ({made.stat().st_size} bytes)")
     return 0
 
 

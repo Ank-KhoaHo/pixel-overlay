@@ -304,9 +304,69 @@ def test_a_folder_git_cannot_read_builds_nothing(monkeypatch, tmp_path):
     assert not (plain / "dist").exists() or list((plain / "dist").iterdir()) == []
 
 
+# Stands in for `npm run zip` and `npm run zip:firefox`: writes the zip the bundler would,
+# under the name it would use, with the browser's name inside.
+_FAKE_ZIP = ("import pathlib, sys; p = pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); "
+             "p.write_bytes(sys.argv[2].encode())")
+
+
+def _fake_bundler(monkeypatch, version: str = "1.2.0", exit_code: int = 0) -> None:
+    def command(browser: str) -> list[str]:
+        if exit_code:
+            return [sys.executable, "-c", f"import sys; print('zip broke'); sys.exit({exit_code})"]
+        return [sys.executable, "-c", _FAKE_ZIP, f".output/widget-forge-{version}-{browser}.zip", browser]
+    monkeypatch.setattr(build_release, "_zip_command", command)
+
+
 def test_the_command_says_what_it_built(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(build_release, "PROJECT", "widget-forge")
     repo = _repo(tmp_path)
     monkeypatch.setattr(build_release, "ROOT", repo)
+    _fake_bundler(monkeypatch)
     assert build_release.main(["v1.2.0"]) == 0
-    assert "dist/widget-forge-1.2.0-source.zip" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    for name in ("source", "chrome", "firefox"):
+        assert f"dist/widget-forge-1.2.0-{name}.zip" in out
+
+
+def test_both_browsers_builds_go_into_dist_beside_the_source(monkeypatch, tmp_path):
+    """A store upload needs the built extension, and the release attaches all of dist/."""
+    monkeypatch.setattr(build_release, "PROJECT", "widget-forge")
+    repo = _repo(tmp_path)
+    _fake_bundler(monkeypatch)
+    build_release.build(repo, "v1.2.0")
+    for browser in ("chrome", "firefox"):
+        store = build_release.build_store(repo, "1.2.0", browser)
+        assert store == repo / "dist" / f"widget-forge-1.2.0-{browser}.zip"
+        assert store.read_bytes() == browser.encode(), f"the {browser} zip holds another browser's build"
+    assert sorted(p.name for p in (repo / "dist").iterdir()) == [
+        "widget-forge-1.2.0-chrome.zip", "widget-forge-1.2.0-firefox.zip", "widget-forge-1.2.0-source.zip"]
+
+
+def test_a_store_zip_of_another_version_is_not_attached(monkeypatch, tmp_path):
+    """The bundler names the zip from package.json. Another number there means package.json
+    and the tag disagree, and that build must not go out under the tag's name."""
+    monkeypatch.setattr(build_release, "PROJECT", "widget-forge")
+    repo = _repo(tmp_path)
+    _fake_bundler(monkeypatch, version="1.1.0")
+    build_release.build(repo, "v1.2.0")
+    with pytest.raises(SystemExit, match="package.json"):
+        build_release.build_store(repo, "1.2.0", "chrome")
+    assert [p.name for p in (repo / "dist").iterdir()] == ["widget-forge-1.2.0-source.zip"]
+
+
+def test_a_bundler_that_fails_stops_the_release(monkeypatch, tmp_path):
+    monkeypatch.setattr(build_release, "PROJECT", "widget-forge")
+    repo = _repo(tmp_path)
+    _fake_bundler(monkeypatch, exit_code=3)
+    with pytest.raises(SystemExit, match="firefox zip failed"):
+        build_release.build_store(repo, "1.2.0", "firefox")
+
+
+def test_each_browser_has_its_own_npm_script():
+    scripts = __import__("json").loads((ROOT / "package.json").read_text(encoding="utf-8"))["scripts"]
+    for browser, script in build_release.ZIP_SCRIPTS.items():
+        assert script in scripts, f"package.json has no `{script}` script for the {browser} zip"
+    # The bundler builds for Chrome unless told otherwise, so only Firefox's script names a browser.
+    assert "firefox" in scripts[build_release.ZIP_SCRIPTS["firefox"]], "the Firefox zip runs a Chrome build"
+    assert "firefox" not in scripts[build_release.ZIP_SCRIPTS["chrome"]], "the Chrome zip runs a Firefox build"
