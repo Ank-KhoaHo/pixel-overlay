@@ -34,6 +34,7 @@ heading is "a little low". A little. Pixel Veil puts the mockup on top of your p
 
 | Where | How | Status |
 |---|---|---|
+| **Chrome, from a release** | Download the Chrome zip from [Releases](https://github.com/Ank-KhoaHo/pixel-overlay/releases), unzip it, then **Load unpacked** | Works today |
 | **Chrome, from source** | Build it, then **Load unpacked** (below) | Works today |
 | **Chrome Web Store** | One click | Listing in preparation |
 | **Edge** | The Chrome build, loaded the same way | Same build; not tried in Edge yet |
@@ -167,6 +168,7 @@ ones that should not.
 | [CONTRIBUTING.md](CONTRIBUTING.md) | how to build and test it, and what gets rejected |
 | [SECURITY.md](SECURITY.md) | how to report a vulnerability, and what is not one |
 | [ROADMAP.md](ROADMAP.md) | direction, and the things deliberately not coming |
+| [CHANGELOG.md](CHANGELOG.md) | what changed in each version |
 | [PUBLIC.md](PUBLIC.md) | why some material is deliberately not published here |
 | [site/](site/index.html) | the project page, served by GitHub Pages |
 | [art/icon.svg](art/icon.svg) | the icon; `node scripts/make_icons.mjs` renders the PNGs in `public/icon/` |
