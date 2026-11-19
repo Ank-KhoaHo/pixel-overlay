@@ -23,3 +23,12 @@ updates:
       # because it is the one most likely to need a change in the code.
       npm-minor-and-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # TypeScript 7 ships no lib/tsserver.js, so the editor's TypeScript support stops working.
+      # Stay on 5.x until that changes.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # The Node types follow the Node that CI and the build run (24, in ci.yml and release.yml).
+      # Types for a newer Node would accept calls that Node 24 does not have.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
