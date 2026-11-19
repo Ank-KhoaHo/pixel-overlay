@@ -1,0 +1,5 @@
+# Everything on this site is public, and every crawler may read it.
+User-agent: *
+Allow: /
+
+Sitemap: https://ank-khoaho.github.io/pixel-overlay/sitemap.xml

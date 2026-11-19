@@ -5,9 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pixel Veil: your design over the page you built</title>
 <meta name="description" content="A free Chrome extension for front-end developers. Lay a design export over a live page and see every pixel that disagrees. Unlimited layers, no account, no site access until you click.">
-<meta property="og:title" content="Pixel Veil">
-<meta property="og:description" content="Lay your design over the page you built, and see every pixel that disagrees. Free, open source, private.">
+<!-- One address, four places: this link, og:url, the JSON-LD url and sitemap.xml. tests/test_site.py holds them together. -->
+<link rel="canonical" href="https://ank-khoaho.github.io/pixel-overlay/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pixel Veil">
+<meta property="og:url" content="https://ank-khoaho.github.io/pixel-overlay/">
+<meta property="og:title" content="Pixel Veil: your design over the page you built">
+<meta property="og:description" content="A free Chrome extension for front-end developers. Lay a design export over a live page and see every pixel that disagrees. Unlimited layers, no account, no site access until you click.">
 <meta property="og:image" content="https://ank-khoaho.github.io/pixel-overlay/img/social.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pixel Veil",
+  "description": "A free Chrome extension for front-end developers. Lay a design export over a live page and see every pixel that disagrees. Unlimited layers, no account, no site access until you click.",
+  "url": "https://ank-khoaho.github.io/pixel-overlay/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Chrome",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "license": "https://github.com/Ank-KhoaHo/pixel-overlay/blob/main/LICENSE",
+  "downloadUrl": "https://github.com/Ank-KhoaHo/pixel-overlay/releases",
+  "image": "https://ank-khoaho.github.io/pixel-overlay/img/social.png"
+}
+</script>
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
