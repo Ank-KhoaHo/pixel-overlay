@@ -121,12 +121,8 @@ def test_the_patterns_file_is_ignored_and_never_tracked():
 # A commit message may cite a ticket: that harms nobody, and it is how history is searched.
 
 
-def _repo_with_a_backlog(tmp_path: Path, staged: dict[str, str], tickets=("A34", "D92")) -> Path:
-    """One clean commit, a gitignored backlog holding the given tickets, and the given files staged.
-
-    The IDs here must never be tickets of the project this test lives in: the leak check reads
-    that project's own backlog too, and would refuse this file for citing them.
-    """
+def _repo_with_a_backlog(tmp_path: Path, staged: dict[str, str], tickets=("A9034", "D9002")) -> Path:
+    """One clean commit, a gitignored backlog holding the given tickets, and the given files staged."""
     repo = tmp_path / "repo"
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
@@ -147,26 +143,26 @@ def _repo_with_a_backlog(tmp_path: Path, staged: dict[str, str], tickets=("A34",
 
 
 def test_a_ticket_id_in_staged_code_is_flagged_with_its_file(tmp_path, monkeypatch, capsys):
-    repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": "limit = 3  # raised for A34\n"})
+    repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": "limit = 3  # raised for A9034\n"})
     code, out = _scan(repo, monkeypatch, capsys)
     assert code == 1
-    assert "staged code: src/tool.py cites ticket A34" in out
+    assert "staged code: src/tool.py cites ticket A9034" in out
     assert "raised for" not in out, "the scan printed the line it matched"
 
 
 def test_a_ticket_id_in_a_test_name_is_flagged(tmp_path, monkeypatch, capsys):
-    repo = _repo_with_a_backlog(tmp_path, {"tests/test_tool.py": "def test_d92_regression():\n    pass\n"})
+    repo = _repo_with_a_backlog(tmp_path, {"tests/test_tool.py": "def test_d9002_regression():\n    pass\n"})
     code, out = _scan(repo, monkeypatch, capsys)
     assert code == 1
-    assert "staged code: tests/test_tool.py cites ticket D92" in out
+    assert "staged code: tests/test_tool.py cites ticket D9002" in out
 
 
 def test_only_a_real_ticket_standing_alone_is_a_citation(tmp_path, monkeypatch, capsys):
     clean = "\n".join([
-        "paper = 'A0'            # a paper size: there is no ticket A0 in this backlog",
-        "colour = '#A34F00'      # inside a longer token",
-        "code = 'XA34'           # inside a longer token",
-        "version = 'A340'        # a different number",
+        "paper = 'B9005'         # shaped like an ID, and there is no ticket B9005 in this backlog",
+        "colour = '#A9034F00'      # inside a longer token",
+        "code = 'XA9034'           # inside a longer token",
+        "version = 'A90340'        # a different number",
         "released = '2026-01-01' # a date: a dated design document is not a ticket, and its year is not an ID",
         "",
     ])
@@ -176,11 +172,11 @@ def test_only_a_real_ticket_standing_alone_is_a_citation(tmp_path, monkeypatch, 
 
 
 def test_prose_may_cite_a_ticket_and_a_removed_line_is_not_new(tmp_path, monkeypatch, capsys):
-    repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": "limit = 3  # raised for A34\n"})
+    repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": "limit = 3  # raised for A9034\n"})
     _git(repo, "commit", "-q", "-m", "Add the tool")
     (repo / "src" / "tool.py").write_text("limit = 3  # the smallest batch that still fills a page\n",
                                           encoding="utf-8", newline="\n")
-    (repo / "NOTES.md").write_text("The limit was raised by A34.\n", encoding="utf-8", newline="\n")
+    (repo / "NOTES.md").write_text("The limit was raised by A9034.\n", encoding="utf-8", newline="\n")
     _git(repo, "add", "src/tool.py", "NOTES.md")
     code, out = _scan(repo, monkeypatch, capsys)
     assert "cites ticket" not in out, out
@@ -188,7 +184,7 @@ def test_prose_may_cite_a_ticket_and_a_removed_line_is_not_new(tmp_path, monkeyp
 
 def test_a_commit_message_may_cite_a_ticket(tmp_path, monkeypatch, capsys):
     repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": "limit = 3\n"})
-    _git(repo, "commit", "-q", "-m", "A34: raise the limit")
+    _git(repo, "commit", "-q", "-m", "A9034: raise the limit")
     code, out = _scan(repo, monkeypatch, capsys)
     assert code == 0, out
 
@@ -196,7 +192,7 @@ def test_a_commit_message_may_cite_a_ticket(tmp_path, monkeypatch, capsys):
 def test_without_a_backlog_on_disk_ticket_ids_are_not_checked_and_it_says_so(tmp_path, monkeypatch, capsys):
     """A clone has no backlog, so it cannot know which words are ticket IDs. It must say that it
     did not look, not report that it looked and found nothing."""
-    repo = _repo(tmp_path, "limit = 3  # raised for A34\n")
+    repo = _repo(tmp_path, "limit = 3  # raised for A9034\n")
     code, out = _scan(repo, monkeypatch, capsys)
     assert code == 0
     assert "ticket IDs were not checked" in out

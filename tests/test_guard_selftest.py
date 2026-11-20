@@ -702,42 +702,53 @@ def _scratch_specs(monkeypatch, folder: Path, specs: dict[str, str]) -> None:
     for name, text in specs.items():
         (target / name).write_text(text, encoding="utf-8", newline="\n")
     monkeypatch.setattr(guard, "_repo_root", lambda: folder)
+    # A project that took the rule late lists its old tickets in LESSONS_EXEMPT. The scratch
+    # tree is not that project: it starts with no exempt ticket, whatever the project lists.
+    monkeypatch.setattr(guard, "LESSONS_EXEMPT", frozenset())
+
+
+def test_the_examples_here_do_not_read_the_projects_own_exempt_list(monkeypatch, tmp_path):
+    """Both projects that took this file saw the examples below fail that day. Each had
+    listed its old tickets in LESSONS_EXEMPT, and an example used one of those IDs."""
+    monkeypatch.setattr(guard, "LESSONS_EXEMPT", frozenset({"A9003", "A9004"}))
+    _scratch_specs(monkeypatch, tmp_path, {"A9003-old.md": _ticket("A9003", "DONE")})
+    assert guard._done_tickets_without_lessons() == ["A9003"]
 
 
 def test_only_a_done_ticket_without_lessons_is_reported(monkeypatch, tmp_path):
     """Most lessons were found buried in the review notes of a ticket, where nobody looks.
     A finished ticket says what it taught, in one place, under one heading."""
     _scratch_specs(monkeypatch, tmp_path, {
-        "C21-with-a-lesson.md": _ticket("C21", "DONE", "", "## Lessons", "", "Measure before choosing."),
-        "C22-none-is-an-answer.md": _ticket("C22", "DONE", "", "## Lessons", "", "None."),
-        "C23-no-heading.md": _ticket("C23", "DONE"),
-        "C24-empty-heading.md": _ticket("C24", "DONE", "", "## Lessons", ""),
-        "C25-heading-then-another.md": _ticket("C25", "DONE", "", "## Lessons", "", "## Review", "", "Notes."),
-        "C26-only-in-an-example.md": _ticket("C26", "DONE", "", "```", "## Lessons", "", "Shown, not written.", "```"),
-        "C27-not-finished.md": _ticket("C27", "BUILT"),
-        "C28-not-started.md": _ticket("C28", "ACCEPTED"),
-        "C29-declined.md": _ticket("C29", "DROPPED"),
-        "C30-said-twice.md": _ticket("C30", "DONE", "", "## Lessons", "", "## Lessons", "", "Measure first."),
+        "A9001-with-a-lesson.md": _ticket("A9001", "DONE", "", "## Lessons", "", "Measure before choosing."),
+        "A9002-none-is-an-answer.md": _ticket("A9002", "DONE", "", "## Lessons", "", "None."),
+        "A9003-no-heading.md": _ticket("A9003", "DONE"),
+        "A9004-empty-heading.md": _ticket("A9004", "DONE", "", "## Lessons", ""),
+        "A9005-heading-then-another.md": _ticket("A9005", "DONE", "", "## Lessons", "", "## Review", "", "Notes."),
+        "A9006-only-in-an-example.md": _ticket("A9006", "DONE", "", "```", "## Lessons", "", "Shown, not written.", "```"),
+        "A9007-not-finished.md": _ticket("A9007", "BUILT"),
+        "A9008-not-started.md": _ticket("A9008", "ACCEPTED"),
+        "A9009-declined.md": _ticket("A9009", "DROPPED"),
+        "A9010-said-twice.md": _ticket("A9010", "DONE", "", "## Lessons", "", "## Lessons", "", "Measure first."),
         # One shape only, so that one search finds every lesson in the backlog.
-        "C99-wrong-level.md": _ticket("C99", "DONE", "", "## Review", "", "### Lessons", "", "Too deep to find."),
+        "A9099-wrong-level.md": _ticket("A9099", "DONE", "", "## Review", "", "### Lessons", "", "Too deep to find."),
         # Its heading reads like an ID on purpose: only the dated file name says it is no ticket.
         "2026-01-01-a-design.md": _doc("# Design", "", "**Status:** DONE"),
     })
-    assert guard._done_tickets_without_lessons() == ["C23", "C24", "C25", "C26", "C99"]
+    assert guard._done_tickets_without_lessons() == ["A9003", "A9004", "A9005", "A9006", "A9099"]
 
 
 def test_a_ticket_closed_before_the_rule_can_be_exempt(monkeypatch, tmp_path):
-    _scratch_specs(monkeypatch, tmp_path, {"C23-old.md": _ticket("C23", "DONE"), "C24-new.md": _ticket("C24", "DONE")})
-    monkeypatch.setattr(guard, "LESSONS_EXEMPT", frozenset({"C23"}))
-    assert guard._done_tickets_without_lessons() == ["C24"]
+    _scratch_specs(monkeypatch, tmp_path, {"A9003-old.md": _ticket("A9003", "DONE"), "A9004-new.md": _ticket("A9004", "DONE")})
+    monkeypatch.setattr(guard, "LESSONS_EXEMPT", frozenset({"A9003"}))
+    assert guard._done_tickets_without_lessons() == ["A9004"]
 
 
 def test_a_finished_ticket_without_lessons_fails_the_guard(monkeypatch, tmp_path):
-    _scratch_specs(monkeypatch, tmp_path, {"C23-no-heading.md": _ticket("C23", "DONE")})
-    with pytest.raises(AssertionError, match="C23"):
+    _scratch_specs(monkeypatch, tmp_path, {"A9003-no-heading.md": _ticket("A9003", "DONE")})
+    with pytest.raises(AssertionError, match="A9003"):
         guard.test_every_done_ticket_says_what_it_taught()
-    (tmp_path / "docs" / "superpowers" / "specs" / "C23-no-heading.md").write_text(
-        _ticket("C23", "DONE", "", "## Lessons", "", "None."), encoding="utf-8", newline="\n")
+    (tmp_path / "docs" / "superpowers" / "specs" / "A9003-no-heading.md").write_text(
+        _ticket("A9003", "DONE", "", "## Lessons", "", "None."), encoding="utf-8", newline="\n")
     guard.test_every_done_ticket_says_what_it_taught()
 
 
