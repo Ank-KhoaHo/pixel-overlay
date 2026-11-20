@@ -157,6 +157,46 @@ def test_a_ticket_id_in_a_test_name_is_flagged(tmp_path, monkeypatch, capsys):
     assert "staged code: tests/test_tool.py cites ticket D9002" in out
 
 
+def test_standing_alone_a_ticket_id_counts_only_in_the_case_its_spec_spells(tmp_path, monkeypatch, capsys):
+    """`d3`, a library's name in a script's help text, was read as the third ticket of section
+    D in one project, and its leak check refused a script of this template."""
+    clean = "\n".join([
+        "topics = 'd9002,web'             # a word in lower case, standing alone",
+        "parser.add_argument('--a9034')   # an option, in lower case",
+        "print('see a9034.')",
+        "",
+    ])
+    repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": clean})
+    code, out = _scan(repo, monkeypatch, capsys)
+    assert code == 0, out
+
+
+@pytest.mark.parametrize("line, ticket", [
+    ("def test_d9002_regression():", "D9002"),
+    ("fix_for_a9034 = True", "A9034"),
+    ("a9034_limit = 3", "A9034"),
+    ("FIX_FOR_A9034 = True", "A9034"),
+])
+def test_inside_a_name_a_ticket_id_is_a_citation_in_lower_case_too(tmp_path, monkeypatch, capsys, line, ticket):
+    """A name is written in lower case, and a test named after its ticket is the commonest way
+    an ID reaches public code. So next to an underscore, the lower-case spelling counts."""
+    repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": line + "\n    pass\n"})
+    code, out = _scan(repo, monkeypatch, capsys)
+    assert code == 1, out
+    assert f"staged code: src/tool.py cites ticket {ticket}" in out
+
+
+def test_an_id_its_spec_spells_in_lower_case_is_read_in_lower_case(tmp_path, monkeypatch, capsys):
+    repo = _repo_with_a_backlog(tmp_path, {"src/tool.py": "limit = 3  # raised for i9245\n"}, tickets=("i9245",))
+    code, out = _scan(repo, monkeypatch, capsys)
+    assert code == 1 and "staged code: src/tool.py cites ticket i9245" in out, out
+
+    (tmp_path / "other").mkdir()
+    other = _repo_with_a_backlog(tmp_path / "other", {"src/tool.py": "limit = 3  # the I9245 bus\n"}, tickets=("i9245",))
+    code, out = _scan(other, monkeypatch, capsys)
+    assert code == 0, out
+
+
 def test_only_a_real_ticket_standing_alone_is_a_citation(tmp_path, monkeypatch, capsys):
     clean = "\n".join([
         "paper = 'B9005'         # shaped like an ID, and there is no ticket B9005 in this backlog",
