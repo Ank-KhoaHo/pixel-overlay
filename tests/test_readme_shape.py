@@ -27,6 +27,9 @@ _LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 # a quote marker, an HTML tag or comment. A line that opens with an upper-case token in angle
 # brackets is none of these: the token stands where a word will be.
 _NOT_PROSE_RE = re.compile(r"^\s*(?:#|\||>|<!--|</?[a-z])")
+# A thematic break (---, ***, ___) is a line drawn across the page, not a sentence. A README
+# that rules off its badges from the text below them is common.
+_BREAK_RE = re.compile(r"^\s*(?:[-*_]\s*){3,}$")
 
 
 def _prose(text: str) -> str:
@@ -37,7 +40,7 @@ def _prose(text: str) -> str:
         if _FENCE_RE.match(line):
             in_fence = not in_fence
             continue
-        if in_fence or _NOT_PROSE_RE.match(line):
+        if in_fence or _NOT_PROSE_RE.match(line) or _BREAK_RE.match(line):
             kept.append("")                         # markup ends the paragraph around it
             continue
         if _LIST_ITEM_RE.match(line):
@@ -258,6 +261,20 @@ def test_the_first_paragraph_is_the_first_prose_under_the_title():
     assert _first_paragraph(SAMPLE) == "Widget Forge makes one widget. It is for people who need one."
     only_badges = "\n".join(["# Title", "", "![logo](logo.png)", "", "## Install", "", "Run it.", ""])
     assert _first_paragraph(only_badges) == "Run it.", "an image alone is not a paragraph of prose"
+    ruled_off = "\n".join(["# Title", "", "![logo](logo.png)", "", "---", "", "It does one thing.", ""])
+    assert _first_paragraph(ruled_off) == "It does one thing.", "a line drawn across the page is not prose"
+
+
+def test_a_line_drawn_across_the_page_is_not_prose():
+    """`---`, `***` and `___` rule off one part of a page from the next. One project ruled
+    off its badges from its text, and the rule was read as the README's first paragraph."""
+    for rule in ("---", "***", "___", "- - -", "* * *", "  ----------  "):
+        text = "\n".join(["Before the line", rule, "after the line.", ""])
+        assert _sentences(text) == ["Before the line", "after the line."], f"{rule!r} did not end the paragraph"
+    # Two marks are not a rule, and neither is a line that holds anything else.
+    assert _sentences("One thing --\nand another.\n") == ["One thing -- and another."]
+    assert _sentences("One thing\n--\nand another.\n") == ["One thing -- and another."]
+    assert _sentences("First\n--- a note ---\nlast.\n") == ["First --- a note --- last."]
 
 
 # ---------------------------------------------------------------- the README itself
