@@ -160,7 +160,7 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Set a public repository's description, topics, "
                                                  "homepage and wiki.")
     parser.add_argument("--description", required=True, help="one line; start it with the product's name")
-    parser.add_argument("--topics", required=True, help="comma-separated, lower case, for example a,b-c,web")
+    parser.add_argument("--topics", required=True, help="comma-separated, lower case, for example cli,dev-tools,python")
     parser.add_argument("--homepage", default="", help="a full address; leave out to keep the current one")
     parser.add_argument("--dry-run", action="store_true", help="print the command and change nothing")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
