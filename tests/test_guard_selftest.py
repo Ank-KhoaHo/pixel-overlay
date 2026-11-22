@@ -758,3 +758,103 @@ def test_a_tree_without_specs_says_it_did_not_look(monkeypatch, tmp_path, capsys
     assert guard._done_tickets_without_lessons() == []
     guard.test_every_done_ticket_says_what_it_taught()
     assert "[CI]" in capsys.readouterr().out, "nothing was checked, and nothing said so"
+
+
+# ---------------------------------------------------------------- a dated design document
+
+
+def test_a_dated_design_document_among_the_specs_is_not_a_ticket(monkeypatch, tmp_path):
+    """The builder and the leak check leave such a document out. The check that holds the page
+    to the specs read it for a ticket's ID and status, found neither, and stopped with an error
+    of Python's own, which names no file."""
+    _scratch_specs(monkeypatch, tmp_path, {
+        "A9003-a-ticket.md": _ticket("A9003", "OPEN"),
+        "2026-01-31-a-design.md": "# A design\n\nIt has no status line.\n",
+    })
+    (tmp_path / "BACKLOG.html").write_text(
+        '<table><tr data-id="A9003"><td><span class="chip chip-open">OPEN</span></td></tr></table>\n',
+        encoding="utf-8", newline="\n")
+    guard.test_the_index_still_agrees_with_its_source()
+
+    (tmp_path / "docs" / "superpowers" / "specs" / "A9004-another.md").write_text(
+        _ticket("A9004", "OPEN"), encoding="utf-8", newline="\n")
+    with pytest.raises(AssertionError, match="A9004"):
+        guard.test_the_index_still_agrees_with_its_source()
+
+
+# ---------------------------------------------------------------- two lines of the checklist
+
+
+def test_the_checklist_keeps_the_two_lines_that_each_cost_a_bad_commit(capsys):
+    """A commit made after a failed gate, and a stale compiled file that failed a sound one.
+    The checklist says how to avoid both. It is working material: a clone has none, and this
+    says that it did not look."""
+    here = [path for path in (ROOT / "DEVELOPMENT-CHECKLIST.md", ROOT / "template" / "seed" / "DEVELOPMENT-CHECKLIST.md")
+            if path.is_file()]
+    if not here:
+        print("[CI] no DEVELOPMENT-CHECKLIST.md in this tree: its two lines were not looked at")
+        return
+    for path in here:
+        checklist = path.read_text(encoding="utf-8")
+        assert "python scripts/check.py && git commit" in checklist, (
+            f"{path.name} no longer chains the commit to the gate with `&&`")
+        assert "PYTHONDONTWRITEBYTECODE=1" in checklist, (
+            f"{path.name} no longer says how to plant a bug in a Python file without a stale compiled copy")
+
+
+# ---------------------------------------------------------------- a code span is not a link
+
+
+def test_link_shaped_text_inside_a_code_span_is_not_a_link():
+    """A type in square brackets and a number in round ones, written as code, was read as a
+    link to a file named `3`."""
+    assert _targets("call `Step[str](3)` and then [the guide](guide.md)\n") == ["guide.md"]
+    assert _targets("`[a](one.md)` and `[b](two.md)` and [c](three.md)\n") == ["three.md"]
+    assert _targets("``a span with a ` inside: [x](gone.md)`` then [real](real.md)\n") == ["real.md"]
+
+
+def test_a_link_whose_text_is_a_code_span_is_still_a_link():
+    text = "see [`tools/check.py`](tools/check.py) and [`a` and `b`](both.md)\n"
+    assert _targets(text) == ["tools/check.py", "both.md"]
+
+
+def test_a_backtick_with_no_partner_hides_nothing():
+    assert _targets("a lone ` and then [x](still-checked.md)\n") == ["still-checked.md"]
+    assert _targets("[x](first.md) and a lone ` at the end\n") == ["first.md"]
+
+
+def test_a_code_span_inside_a_scanned_fence_is_left_out_too():
+    text = "```\n`table[key](3)` and [b](inside.md)\n```\n"
+    assert _targets(text) == ["inside.md"]
+    assert list(guard._iter_markdown_links("intro\n\n`x[y](3)` [c](after.md)\n")) == [(3, "after.md")]
+
+
+def test_a_code_span_does_not_fail_the_guard():
+    probe = ROOT / "zz-selftest-code-span.md"
+    try:
+        probe.write_text("# probe\n\nA step is written `Step[str](3)` here.\n", encoding="utf-8", newline="\n")
+        guard.test_every_markdown_link_resolves()
+    finally:
+        probe.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------- a release heading in brackets
+
+
+_KEEP_A_CHANGELOG = ("# Changelog\n\n## [Unreleased]\n\n### Added\n\n- something new\n\n"
+                     "## [0.2.0] - 2026-11-01\n\n### Added\n\n- a thing\n\n"
+                     "## [0.1.0] - 2026-10-01\n\n- the first build\n")
+
+
+def test_a_release_heading_in_brackets_is_a_release():
+    """Keep a Changelog writes `## [0.2.0] - date`. With that changelog the version check
+    compared nothing, and nothing said so."""
+    assert guard._released_versions(_KEEP_A_CHANGELOG) == ["0.2.0", "0.1.0"]
+    assert guard._version_problems(_KEEP_A_CHANGELOG, "0.2.0\n") == []
+    problems = guard._version_problems(_KEEP_A_CHANGELOG, "0.3.0\n")
+    assert len(problems) == 1 and "0.2.0" in problems[0] and "0.3.0" in problems[0], problems
+
+
+def test_a_bracket_that_holds_no_version_is_not_a_release():
+    changelog = "## [Unreleased]\n\n## [v0.3.0]\n\n## [next] 0.4.0\n\n## 0.1.0 (2026-10-01)\n"
+    assert guard._released_versions(changelog) == ["0.1.0"]
