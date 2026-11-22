@@ -648,7 +648,8 @@ def test_every_open_question_names_its_default():
 
 # ---------------------------------------------------------------- the changelog and the version
 
-_RELEASE_RE = re.compile(r"^##\s+(\d+\.\d+\.\d+)\b")
+# Reads release headings in either form: `## 0.2.0` or Keep a Changelog's `## [0.2.0]`.
+_RELEASE_RE = re.compile(r"^##\s+\[?(\d+\.\d+\.\d+)\b")
 _VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 
