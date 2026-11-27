@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Veil guide: privacy and permissions</title>
+<meta name="description" content="What Pixel Veil can read, step by step, where it keeps your designs, and what it sends: nothing.">
+<link rel="canonical" href="https://ank-khoaho.github.io/pixel-overlay/guide/privacy.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pixel Veil">
+<meta property="og:url" content="https://ank-khoaho.github.io/pixel-overlay/guide/privacy.html">
+<meta property="og:title" content="Pixel Veil guide: privacy and permissions">
+<meta property="og:description" content="What Pixel Veil can read, step by step, where it keeps your designs, and what it sends: nothing.">
+<meta property="og:image" content="https://ank-khoaho.github.io/pixel-overlay/img/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the page</a>
+<header class="top">
+  <div class="wrap row">
+    <a class="brand" href="../"><img src="../icon.svg" alt="" width="30" height="30">Pixel Veil</a>
+    <nav aria-label="Site">
+      <a href="./" class="here">Guide</a>
+      <a href="https://github.com/Ank-KhoaHo/pixel-overlay/releases/latest">Download</a>
+      <a href="https://github.com/Ank-KhoaHo/pixel-overlay">GitHub</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap docs">
+  <nav class="side" aria-label="Guide">
+    <p class="side-title">Guide</p>
+    <ol>
+      <li><a href="index.html">Getting started</a></li>
+      <li><a href="compare.html">Compare a design</a></li>
+      <li><a href="organise.html">Organise your layers</a></li>
+      <li><a href="keyboard.html">Keyboard</a></li>
+      <li><a href="privacy.html" aria-current="page">Privacy and permissions</a></li>
+      <li><a href="reference.html">Limits and questions</a></li>
+    </ol>
+  </nav>
+  <main id="main">
+<h1>Privacy and permissions</h1>
+<p class="lede">Many extensions can read every site you visit from the moment you install them. Pixel Veil
+asks one step at a time, and you can always see which step you are on.</p>
+
+<h2 id="steps">Site access, one step at a time</h2>
+<ol class="steps">
+  <li><strong>You install it.</strong> It can read no site at all. Chrome shows no site access for it.</li>
+  <li><strong>You click its icon on a page.</strong> It may draw on that one tab, until you leave the page.
+    This is Chrome's <code>activeTab</code> permission.</li>
+  <li><strong>You tick Keep on this site.</strong> Chrome asks you for that one site, so the layers come back after a
+    reload. Untick it, and the permission goes back.</li>
+</ol>
+
+<h2 id="data">Where your designs go</h2>
+<ul>
+  <li>Your images and settings stay in your browser, in the extension's own storage
+    (<code>chrome.storage.local</code>).</li>
+  <li>Pixel Veil sends nothing anywhere. It has no account, no server and no analytics.</li>
+  <li>The page cannot read your designs. The layers live in a closed shadow root, and Pixel Veil ignores key
+    presses that a page's script makes up.</li>
+  <li><strong>Export</strong> makes a file only when you click it, and the file stays on your computer.</li>
+</ul>
+<p>The full policy is on <a href="https://wanksolution.com/pixel-veil/privacy/">wanksolution.com</a>. To report a
+vulnerability, see <a href="https://github.com/Ank-KhoaHo/pixel-overlay/blob/main/SECURITY.md">SECURITY.md</a>. Every line of the extension is open
+source under MIT, <a href="https://github.com/Ank-KhoaHo/pixel-overlay">on GitHub</a>.</p>
+    <nav class="pager" aria-label="Previous and next page">
+      <a class="prev" href="keyboard.html"><span>Previous</span>Keyboard</a> <a class="next" href="reference.html"><span>Next</span>Limits and questions</a>
+    </nav>
+  </main>
+</div>
+<footer>
+  <div class="wrap row">
+    <span>Pixel Veil is open source under the <a href="https://github.com/Ank-KhoaHo/pixel-overlay/blob/main/LICENSE">MIT licence</a>.</span>
+    <a href="https://github.com/Ank-KhoaHo/pixel-overlay">Source on GitHub</a>
+    <a href="https://github.com/Ank-KhoaHo/pixel-overlay/issues">Report a problem</a>
+  </div>
+</footer>
+</body>
+</html>

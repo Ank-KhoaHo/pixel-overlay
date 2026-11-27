@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Veil guide: compare a design</title>
+<meta name="description" content="Add a design image, line it up with the page, and compare them with opacity, Difference, Multiply, Screen and Invert.">
+<link rel="canonical" href="https://ank-khoaho.github.io/pixel-overlay/guide/compare.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pixel Veil">
+<meta property="og:url" content="https://ank-khoaho.github.io/pixel-overlay/guide/compare.html">
+<meta property="og:title" content="Pixel Veil guide: compare a design">
+<meta property="og:description" content="Add a design image, line it up with the page, and compare them with opacity, Difference, Multiply, Screen and Invert.">
+<meta property="og:image" content="https://ank-khoaho.github.io/pixel-overlay/img/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the page</a>
+<header class="top">
+  <div class="wrap row">
+    <a class="brand" href="../"><img src="../icon.svg" alt="" width="30" height="30">Pixel Veil</a>
+    <nav aria-label="Site">
+      <a href="./" class="here">Guide</a>
+      <a href="https://github.com/Ank-KhoaHo/pixel-overlay/releases/latest">Download</a>
+      <a href="https://github.com/Ank-KhoaHo/pixel-overlay">GitHub</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap docs">
+  <nav class="side" aria-label="Guide">
+    <p class="side-title">Guide</p>
+    <ol>
+      <li><a href="index.html">Getting started</a></li>
+      <li><a href="compare.html" aria-current="page">Compare a design</a></li>
+      <li><a href="organise.html">Organise your layers</a></li>
+      <li><a href="keyboard.html">Keyboard</a></li>
+      <li><a href="privacy.html">Privacy and permissions</a></li>
+      <li><a href="reference.html">Limits and questions</a></li>
+    </ol>
+  </nav>
+  <main id="main">
+<h1>Compare a design</h1>
+<p class="lede">Add the design, line it up with the page, then change how the two are drawn until the
+differences stand out.</p>
+
+<h2 id="add">Add a design</h2>
+<p>Three ways, all into the panel:</p>
+<ul>
+  <li><strong>Add image</strong> opens a file picker.</li>
+  <li>Drop one or more image files on the panel. Each becomes its own layer.</li>
+  <li>Paste an image with <span class="keys"><kbd>Ctrl</kbd>+<kbd>V</kbd></span> while the panel has focus.</li>
+</ul>
+<p>A new layer goes on top of the others and becomes the active one. It is named after its file, starts at
+50&nbsp;% see-through, and is not locked.</p>
+<p>Pixel Veil takes PNG, JPEG, WebP and GIF, up to 25&nbsp;MB each. It refuses SVG, and says why in the panel.</p>
+<p><strong>A design exported at 2x</strong> (for a Retina screen) is twice the page's size. Click
+<strong>&frac12; (for @2x)</strong> to draw it at half its size.</p>
+
+<h2 id="line-up">Line it up</h2>
+<p>Each of these moves the <em>active</em> layer: the one marked in the list. Click a layer's name to make it active.</p>
+<table>
+  <thead><tr><th scope="col">How</th><th scope="col">What it does</th></tr></thead>
+  <tbody>
+    <tr><td>Drag the layer</td><td>Moves it. Within 8&nbsp;px of the page's left edge, right edge or top, it snaps to that edge.</td></tr>
+    <tr><td>Arrow keys</td><td>Move it 1&nbsp;px; with <span class="keys"><kbd>Shift</kbd></span>, 10&nbsp;px. The page does not scroll.</td></tr>
+    <tr><td><strong>X</strong> and <strong>Y</strong></td><td>Type the position in page pixels. <span class="keys"><kbd>Enter</kbd></span> applies it.</td></tr>
+    <tr><td><strong>Scale</strong></td><td>From 0.1 to 4 times the image's own size, in steps of 0.05.</td></tr>
+    <tr><td><strong>Center</strong></td><td>Centres the layer across the page's width.</td></tr>
+    <tr><td><strong>Fit width</strong></td><td>Scales the layer to the page's width and moves it to the left edge.</td></tr>
+  </tbody>
+</table>
+<p class="note">The arrow keys do nothing while you type in a text field, so typing never moves a layer.
+A locked layer does not move at all, and its <strong>Center</strong> and <strong>Fit width</strong> are off.</p>
+
+<h2 id="see-through">See through it</h2>
+<p><strong>Opacity</strong> sets how solid the active layer is: type a number from 0 to 100, or drag the slider.
+<span class="keys"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>.</kbd></span> makes it 10&nbsp;% more solid, and <span class="keys"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>,</kbd></span> 10&nbsp;% more see-through.</p>
+
+<h2 id="blend">Compare in four ways</h2>
+<p>The <strong>Blend mode</strong> list sets how every layer on this site is drawn over the page.</p>
+<table>
+  <thead><tr><th scope="col">Mode</th><th scope="col">Use it to</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Normal</strong></td><td>See the design over the page, at the layer's opacity.</td></tr>
+    <tr><td><strong>Difference</strong></td><td>Find what differs. Pixels that match turn black; a shift of one pixel shows as a thin outline.</td></tr>
+    <tr><td><strong>Multiply</strong></td><td>See dark lines of both at once, such as text and borders on a light page.</td></tr>
+    <tr><td><strong>Screen</strong></td><td>The same for light lines on a dark page.</td></tr>
+  </tbody>
+</table>
+<p>The <strong>Difference</strong> button switches between Difference and Normal in one click.
+<strong>Invert</strong> flips the colours of the layers. At 50&nbsp;% opacity, an inverted design turns every
+matching pixel grey: another way to see what differs.</p>
+
+<h2 id="show-hide">Show, hide and lock</h2>
+<ul>
+  <li>The eye button on a layer's row hides that layer, or shows it again.</li>
+  <li><strong>Hide all</strong> hides every layer and keeps the panel. <span class="keys"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd></span> does the same.</li>
+  <li>Clicking the toolbar icon again hides all layers; the next click shows them.</li>
+  <li><strong>Lock</strong> lets your clicks pass through the layer to the page under it, so you can use the
+    page while the design stays in place.</li>
+</ul>
+    <nav class="pager" aria-label="Previous and next page">
+      <a class="prev" href="index.html"><span>Previous</span>Getting started</a> <a class="next" href="organise.html"><span>Next</span>Organise your layers</a>
+    </nav>
+  </main>
+</div>
+<footer>
+  <div class="wrap row">
+    <span>Pixel Veil is open source under the <a href="https://github.com/Ank-KhoaHo/pixel-overlay/blob/main/LICENSE">MIT licence</a>.</span>
+    <a href="https://github.com/Ank-KhoaHo/pixel-overlay">Source on GitHub</a>
+    <a href="https://github.com/Ank-KhoaHo/pixel-overlay/issues">Report a problem</a>
+  </div>
+</footer>
+</body>
+</html>

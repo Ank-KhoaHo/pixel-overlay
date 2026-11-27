@@ -22,12 +22,18 @@ the page can be checked against its design. It is free, open source under MIT, a
 
 - Images: PNG, JPEG, WebP and GIF, up to 25 MB each.
 - Layers are kept per site, not per page.
-- Not on the Chrome Web Store yet: build it from source, or download a release. Firefox 140+ builds and passes
+- Not on the Chrome Web Store yet: download a release, or build it from source. Firefox 140+ builds and passes
   Mozilla's linter but has not been run in Firefox.
 
 ## Where things are
 
 - [The page](https://ank-khoaho.github.io/pixel-overlay/): what it is, in one screen
+- [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/): install it, then every control, step by step
+- [Compare a design](https://ank-khoaho.github.io/pixel-overlay/guide/compare.html): add a design, line it up, blend modes
+- [Organise your layers](https://ank-khoaho.github.io/pixel-overlay/guide/organise.html): groups, pinned layers, keep on a site, export and import, side panel
+- [Keyboard](https://ank-khoaho.github.io/pixel-overlay/guide/keyboard.html): every shortcut
+- [Privacy and permissions](https://ank-khoaho.github.io/pixel-overlay/guide/privacy.html): what it can read, step by step
+- [Limits and questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference.html): limits, what was tried, answers
 - [The README](https://github.com/Ank-KhoaHo/pixel-overlay#readme): how to install and use it, its limits and its alternatives
 - [Releases](https://github.com/Ank-KhoaHo/pixel-overlay/releases): every version, with its notes
 - [Privacy policy](https://wanksolution.com/pixel-veil/privacy/): what it stores and what it sends

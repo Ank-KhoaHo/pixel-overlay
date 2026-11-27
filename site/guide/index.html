@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Veil guide: getting started</title>
+<meta name="description" content="Install Pixel Veil in Chrome from a release zip or from source, and lay your first design over a live page.">
+<link rel="canonical" href="https://ank-khoaho.github.io/pixel-overlay/guide/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pixel Veil">
+<meta property="og:url" content="https://ank-khoaho.github.io/pixel-overlay/guide/">
+<meta property="og:title" content="Pixel Veil guide: getting started">
+<meta property="og:description" content="Install Pixel Veil in Chrome from a release zip or from source, and lay your first design over a live page.">
+<meta property="og:image" content="https://ank-khoaho.github.io/pixel-overlay/img/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the page</a>
+<header class="top">
+  <div class="wrap row">
+    <a class="brand" href="../"><img src="../icon.svg" alt="" width="30" height="30">Pixel Veil</a>
+    <nav aria-label="Site">
+      <a href="./" class="here">Guide</a>
+      <a href="https://github.com/Ank-KhoaHo/pixel-overlay/releases/latest">Download</a>
+      <a href="https://github.com/Ank-KhoaHo/pixel-overlay">GitHub</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap docs">
+  <nav class="side" aria-label="Guide">
+    <p class="side-title">Guide</p>
+    <ol>
+      <li><a href="index.html" aria-current="page">Getting started</a></li>
+      <li><a href="compare.html">Compare a design</a></li>
+      <li><a href="organise.html">Organise your layers</a></li>
+      <li><a href="keyboard.html">Keyboard</a></li>
+      <li><a href="privacy.html">Privacy and permissions</a></li>
+      <li><a href="reference.html">Limits and questions</a></li>
+    </ol>
+  </nav>
+  <main id="main">
+<h1>Getting started</h1>
+<p class="lede">Pixel Veil lays a design image over the page you built, so you can see every pixel that
+disagrees. This guide covers every control. Start here: install it, then lay your first design.</p>
+
+<h2 id="install">Install</h2>
+<p>Pixel Veil is not on the Chrome Web Store yet. Until it is, load it into Chrome yourself. It takes a
+minute either way.</p>
+<table>
+  <thead><tr><th scope="col">Browser</th><th scope="col">How</th><th scope="col">Status</th></tr></thead>
+  <tbody>
+    <tr><td>Chrome</td><td>The Chrome zip from a release, or built from source</td><td>Works today</td></tr>
+    <tr><td>Edge</td><td>The same Chrome zip, loaded the same way</td><td>Same build; not tried in Edge yet</td></tr>
+    <tr><td>Firefox 140+</td><td>The Firefox zip from a release</td><td>Built and linted; not run in Firefox yet</td></tr>
+    <tr><td>Chrome Web Store</td><td>One click</td><td>Listing in preparation</td></tr>
+  </tbody>
+</table>
+
+<h3 id="from-a-release">Chrome, from a release</h3>
+<ol class="steps">
+  <li>Open <a href="https://github.com/Ank-KhoaHo/pixel-overlay/releases/latest">the latest release</a> and download
+    <code>pixel-overlay-&lt;version&gt;-chrome.zip</code>.</li>
+  <li>Unzip it into a new, empty folder. The files sit at the top of the zip, with no folder of their own.</li>
+  <li>Open <code>chrome://extensions</code> and turn on <strong>Developer mode</strong>.</li>
+  <li>Click <strong>Load unpacked</strong> and pick the folder you unzipped into.</li>
+  <li>Pin Pixel Veil to the toolbar, so its icon is one click away.</li>
+</ol>
+<p class="note">Keep the folder. Chrome loads the extension from it each time it starts.</p>
+
+<h3 id="from-source">Chrome, from source</h3>
+<pre><code>git clone https://github.com/Ank-KhoaHo/pixel-overlay
+cd pixel-overlay
+npm ci
+npm run build</code></pre>
+<p>Then load the <code>.output/chrome-mv3</code> folder with <strong>Load unpacked</strong>, as in steps 3 to 5 above.</p>
+
+<h3 id="firefox">Firefox</h3>
+<p>Nobody has run the Firefox build in Firefox yet. To try it, open <code>about:debugging</code>, choose
+<strong>This Firefox</strong>, click <strong>Load Temporary Add-on</strong>, and pick the Firefox zip. Firefox
+removes a temporary add-on when it closes. The Firefox build has no side panel button.</p>
+
+<h2 id="first-overlay">Your first overlay</h2>
+<ol class="steps">
+  <li>Open your page, on <code>localhost</code> or anywhere else, and click the <strong>Pixel Veil</strong> icon.
+    The panel appears at the top right.</li>
+  <li>Click <strong>Add image</strong> and pick an export of the design: a Figma frame as a PNG, say. You can
+    also drop image files on the panel, or paste one with <span class="keys"><kbd>Ctrl</kbd>+<kbd>V</kbd></span>.</li>
+  <li>Drag the design into place. It starts at 50&nbsp;% see-through.</li>
+  <li>Click <strong>Difference</strong>. Pixels that match turn black; whatever is not black differs.</li>
+  <li>Click the icon again to hide all layers. One more click shows them again.</li>
+</ol>
+<figure>
+  <img src="../img/hero.webp" alt="A page with its design laid over it. Left of the orange line, the design at 50 % over the page; right of it, Difference view, where matching pixels are black and the text that moved shows twice." width="2160" height="1352">
+  <figcaption>Left of the line, the design at 50&nbsp;%. Right of it, Difference: only what disagrees stays visible.</figcaption>
+</figure>
+<p>Your layers stay with the site. Tick <strong>Keep on this site</strong> to have them come back after a
+reload: see <a href="organise.html#keep">Keep on this site</a>.</p>
+    <nav class="pager" aria-label="Previous and next page">
+      <a class="next" href="compare.html"><span>Next</span>Compare a design</a>
+    </nav>
+  </main>
+</div>
+<footer>
+  <div class="wrap row">
+    <span>Pixel Veil is open source under the <a href="https://github.com/Ank-KhoaHo/pixel-overlay/blob/main/LICENSE">MIT licence</a>.</span>
+    <a href="https://github.com/Ank-KhoaHo/pixel-overlay">Source on GitHub</a>
+    <a href="https://github.com/Ank-KhoaHo/pixel-overlay/issues">Report a problem</a>
+  </div>
+</footer>
+</body>
+</html>
