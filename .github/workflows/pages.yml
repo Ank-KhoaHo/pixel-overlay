@@ -1,11 +1,11 @@
 name: pages
 
-# Publishes site/ (the one-page project page) to GitHub Pages. Nothing is built: the folder is
-# served as it is.
+# Publishes site/ (the project page, served as it is) to GitHub Pages, with the guide beside it at
+# guide/: VitePress builds that from guide/*.md (npm run docs:build).
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "guide/**", "CHANGELOG.md", "public/icon/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -25,9 +25,23 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Build the guide
+        run: npm run docs:build
+      # The project page as it is, and the built guide in its guide/ folder.
+      - name: Put the site together
+        run: |
+          mkdir _site
+          cp -R site/. _site/
+          cp -R guide/.vitepress/dist/. _site/guide/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: site
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

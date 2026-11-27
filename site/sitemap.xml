@@ -2,30 +2,38 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ank-khoaho.github.io/pixel-overlay/</loc>
-    <lastmod>2026-11-27</lastmod>
+    <lastmod>2026-11-28</lastmod>
   </url>
   <url>
     <loc>https://ank-khoaho.github.io/pixel-overlay/guide/</loc>
-    <lastmod>2026-11-27</lastmod>
+    <lastmod>2026-11-28</lastmod>
   </url>
   <url>
-    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/compare.html</loc>
-    <lastmod>2026-11-27</lastmod>
+    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/getting-started</loc>
+    <lastmod>2026-11-28</lastmod>
   </url>
   <url>
-    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/organise.html</loc>
-    <lastmod>2026-11-27</lastmod>
+    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/compare</loc>
+    <lastmod>2026-11-28</lastmod>
   </url>
   <url>
-    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/keyboard.html</loc>
-    <lastmod>2026-11-27</lastmod>
+    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/organise</loc>
+    <lastmod>2026-11-28</lastmod>
   </url>
   <url>
-    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/privacy.html</loc>
-    <lastmod>2026-11-27</lastmod>
+    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/keyboard</loc>
+    <lastmod>2026-11-28</lastmod>
   </url>
   <url>
-    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/reference.html</loc>
-    <lastmod>2026-11-27</lastmod>
+    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/privacy</loc>
+    <lastmod>2026-11-28</lastmod>
+  </url>
+  <url>
+    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/reference</loc>
+    <lastmod>2026-11-28</lastmod>
+  </url>
+  <url>
+    <loc>https://ank-khoaho.github.io/pixel-overlay/guide/changelog</loc>
+    <lastmod>2026-11-28</lastmod>
   </url>
 </urlset>

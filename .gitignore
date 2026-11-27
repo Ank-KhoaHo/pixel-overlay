@@ -50,3 +50,7 @@ Thumbs.db
 
 # Read by scripts/check_leaks.py. Local to each maintainer, like the rules above.
 /.leak-patterns.local
+
+# The guide's build and cache; the Pages workflow builds it again.
+guide/.vitepress/dist/
+guide/.vitepress/cache/

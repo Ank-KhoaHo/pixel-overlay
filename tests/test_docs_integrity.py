@@ -266,10 +266,10 @@ def _deliberately_unpublished(rel: str) -> bool:
 # can be measured only with the working half on disk; in a tree without it (any
 # clone) the helper sets MIN_MD_FILES and MIN_LINKS_CI and leaves the other two.
 # A DROP below these means the walk broke, not that the repo shrank.
-MIN_MD_FILES = 5
-MIN_LINKS_LOCAL = 15
-MIN_LINKS_CI = 15
-MIN_ROWS = 28
+MIN_MD_FILES = 12
+MIN_LINKS_LOCAL = 29
+MIN_LINKS_CI = 29
+MIN_ROWS = 37
 PUBLIC_MD_MAX_LINES = 35
 
 

@@ -58,6 +58,7 @@ COMMANDS: dict[str, list[str]] = {
     "browser": ["npx", "playwright", "test"],
     "e2e-build": ["npm", "run", "--silent", "build:e2e"],
     "firefox": ["npm", "run", "--silent", "build:firefox"],
+    "docs": ["npm", "run", "--silent", "docs:build"],
 }
 
 # Where the Firefox build is written. The same rule as the store build: no site at install.
@@ -67,7 +68,7 @@ LINT = ["npx", "web-ext", "lint", "--source-dir", FIREFOX_BUILD]
 # Seconds. Each is below the limit scripts/check.py gives the same step, so that this
 # script is the one that stops, and it stops everything it started.
 LIMITS: dict[str, int] = {"typecheck": 240, "build": 540, "unit": 540, "browser": 1700,
-                          "e2e-build": 540, "firefox": 540}
+                          "e2e-build": 540, "firefox": 540, "docs": 240}
 
 _SKIP_WORDS = {"unit": r"skipped|todo", "browser": r"skipped"}
 
@@ -233,7 +234,7 @@ def main(argv: list[str] | None = None) -> int:
     """Run one step. Returns 0 only when it passed: the gate reads the exit code."""
     parser = argparse.ArgumentParser(description="The gate's steps for a browser extension.")
     parser.add_argument("step", choices=["typecheck", "build", "checks", "unit", "browser",
-                                         "e2e-build", "firefox"])
+                                         "e2e-build", "firefox", "docs"])
     step = parser.parse_args(argv).step
 
     # The pack was installed and the extension was not created yet. That is a failure with

@@ -170,8 +170,8 @@ ones that should not.
 | [ROADMAP.md](ROADMAP.md) | direction, and the things deliberately not coming |
 | [CHANGELOG.md](CHANGELOG.md) | what changed in each version |
 | [PUBLIC.md](PUBLIC.md) | why some material is deliberately not published here |
-| [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/) | every control, step by step: install, compare, organise, keyboard, privacy, limits |
-| [site/](site/index.html) | the project page and the guide, served by GitHub Pages |
+| [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/) | every control, step by step, with search; its pages are [guide/](guide/README.md) |
+| [site/](site/index.html) | the project page, served by GitHub Pages beside the guide |
 | [art/icon.svg](art/icon.svg) | the icon; `node scripts/make_icons.mjs` renders the PNGs in `public/icon/` |
 | [art/banner.png](art/banner.png) | the banner this README opens with |
 | [art/cover.png](art/cover.png) | the cover: the Chrome Web Store's small tile, 440&times;280 |

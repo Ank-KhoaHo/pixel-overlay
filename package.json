@@ -19,7 +19,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "docs:dev": "vitepress dev guide",
+    "docs:build": "vitepress build guide"
   },
   "dependencies": {
     "react": "19.3.1",
@@ -32,6 +34,7 @@
     "@types/react-dom": "19.3.0",
     "@wxt-dev/module-react": "1.2.2",
     "typescript": "5.9.3",
+    "vitepress": "2.0.0-alpha.21",
     "vitest": "5.1.1",
     "web-ext": "10.8.0",
     "wxt": "0.21.5"

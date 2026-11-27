@@ -28,12 +28,14 @@ the page can be checked against its design. It is free, open source under MIT, a
 ## Where things are
 
 - [The page](https://ank-khoaho.github.io/pixel-overlay/): what it is, in one screen
-- [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/): install it, then every control, step by step
-- [Compare a design](https://ank-khoaho.github.io/pixel-overlay/guide/compare.html): add a design, line it up, blend modes
-- [Organise your layers](https://ank-khoaho.github.io/pixel-overlay/guide/organise.html): groups, pinned layers, keep on a site, export and import, side panel
-- [Keyboard](https://ank-khoaho.github.io/pixel-overlay/guide/keyboard.html): every shortcut
-- [Privacy and permissions](https://ank-khoaho.github.io/pixel-overlay/guide/privacy.html): what it can read, step by step
-- [Limits and questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference.html): limits, what was tried, answers
+- [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/): one page per task, with search
+- [Getting started](https://ank-khoaho.github.io/pixel-overlay/guide/getting-started): install it, then lay your first design
+- [Compare a design](https://ank-khoaho.github.io/pixel-overlay/guide/compare): add a design, line it up, blend modes
+- [Organise your layers](https://ank-khoaho.github.io/pixel-overlay/guide/organise): groups, pinned layers, keep on a site, export and import, side panel
+- [Keyboard](https://ank-khoaho.github.io/pixel-overlay/guide/keyboard): every shortcut
+- [Privacy and permissions](https://ank-khoaho.github.io/pixel-overlay/guide/privacy): what it can read, step by step
+- [Limits and questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference): limits, what was tried, answers
+- [Changelog](https://ank-khoaho.github.io/pixel-overlay/guide/changelog): what changed in each version
 - [The README](https://github.com/Ank-KhoaHo/pixel-overlay#readme): how to install and use it, its limits and its alternatives
 - [Releases](https://github.com/Ank-KhoaHo/pixel-overlay/releases): every version, with its notes
 - [Privacy policy](https://wanksolution.com/pixel-veil/privacy/): what it stores and what it sends

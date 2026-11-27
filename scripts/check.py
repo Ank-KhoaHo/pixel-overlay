@@ -103,6 +103,8 @@ STEPS: list[Step] = [
     Step(name="extension checks", command=[sys.executable, "scripts/extension_step.py", "checks"], timeout=60),
     Step(name="e2e build", command=[sys.executable, "scripts/extension_step.py", "e2e-build"], timeout=600),
     Step(name="Firefox build and lint", command=[sys.executable, "scripts/extension_step.py", "firefox"], timeout=600),
+    # The guide, built by VitePress from guide/*.md. The build fails on a dead link between its pages.
+    Step(name="guide", command=[sys.executable, "scripts/extension_step.py", "docs"], timeout=300),
     Step(name="unit tests", command=[sys.executable, "scripts/extension_step.py", "unit"], timeout=600),
     Step(name="browser tests", command=[sys.executable, "scripts/extension_step.py", "browser"], timeout=1800),
 ]
