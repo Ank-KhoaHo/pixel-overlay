@@ -1,6 +1,6 @@
 // Claude's review tests for ticket A3 (the Firefox build). agy: never edit this file.
 // Reads the BUILT manifests, so the gate builds all three before vitest runs
-// (scripts/check.sh and ci.yml). A missing build fails here on purpose; it never skips.
+// (scripts/check.py, which ci.yml runs). A missing build fails here on purpose; it never skips.
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -8,7 +8,7 @@ type Manifest = Record<string, any>;
 
 function load(dir: string): Manifest {
   const p = `.output/${dir}/manifest.json`;
-  if (!existsSync(p)) throw new Error(`${p} is missing: run the builds first (bash scripts/check.sh)`);
+  if (!existsSync(p)) throw new Error(`${p} is missing: run the builds first (python scripts/check.py)`);
   return JSON.parse(readFileSync(p, 'utf-8'));
 }
 

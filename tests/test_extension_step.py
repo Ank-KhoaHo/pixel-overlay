@@ -327,15 +327,10 @@ def test_each_step_gives_up_before_the_gate_does():
     import re
     gate = ROOT / "scripts" / "check.py"                 # in a project
     fragment = ROOT.parent / "gate-steps.txt"            # where the pack lies, in the template
-    shell = ROOT / "scripts" / "check.sh"                # the old gate, kept while the two are compared
     text = (gate if gate.is_file() else fragment).read_text(encoding="utf-8")
     limits = dict(re.findall(r'"scripts/extension_step\.py", "([\w-]+)"\], timeout=(\d+)', text))
     every_step = set(step.LIMITS) | {"checks"}
     assert set(limits) == every_step, limits
-    if shell.is_file():
-        # The shell gate gives no step a limit of its own: each must still go through the script.
-        through = set(re.findall(r"scripts/extension_step\.py ([\w-]+)", shell.read_text(encoding="utf-8")))
-        assert through == every_step, through
     for name, own in step.LIMITS.items():
         assert own < int(limits[name]), f"{name}: the step's own limit ({own} s) is not below the gate's ({limits[name]} s)"
 

@@ -1,11 +1,11 @@
 // Claude's review tests for ticket A10 (side panel). agy: never edit this file.
-// Reads the BUILT manifests; scripts/check.sh builds all three before vitest runs.
+// Reads the BUILT manifests; scripts/check.py builds all three before vitest runs.
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 function load(dir: string): Record<string, any> {
   const p = `.output/${dir}/manifest.json`;
-  if (!existsSync(p)) throw new Error(`${p} is missing: run the builds first (bash scripts/check.sh)`);
+  if (!existsSync(p)) throw new Error(`${p} is missing: run the builds first (python scripts/check.py)`);
   return JSON.parse(readFileSync(p, 'utf-8'));
 }
 
