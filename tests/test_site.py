@@ -323,6 +323,16 @@ def test_the_project_page_and_the_readme_link_the_guide():
     assert _address() + "guide/" in readme, "the README does not link the guide"
 
 
+def test_every_readme_link_into_the_site_names_a_page_of_it():
+    """The README sends a reader to the guide for the details. The guide's build finds a dead
+    link between its own pages; it never reads the README."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    links = [(address, target) for address in _LINK_RE.findall(readme) if (target := _file_for(address))]
+    assert len(links) >= 6, f"only {len(links)} README links into the site were read: the check is vacuous"
+    for address, target in links:
+        assert target.is_file(), f"the README links {address}, and there is no page for it"
+
+
 def test_the_pages_workflow_publishes_the_guide_the_build_writes():
     text = WORKFLOW.read_text(encoding="utf-8")
     assert "run: npm run docs:build" in text, "the Pages workflow does not build the guide"

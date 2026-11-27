@@ -32,25 +32,12 @@ heading is "a little low". A little. Pixel Veil puts the mockup on top of your p
 
 ## Get started
 
-| Where | How | Status |
-|---|---|---|
-| **Chrome, from a release** | Download the Chrome zip from [Releases](https://github.com/Ank-KhoaHo/pixel-overlay/releases), unzip it, then **Load unpacked** | Works today |
-| **Chrome, from source** | Build it, then **Load unpacked** (below) | Works today |
-| **Chrome Web Store** | One click | Listing in preparation |
-| **Edge** | The Chrome build, loaded the same way | Same build; not tried in Edge yet |
-| **Firefox 140+** | `npm run build:firefox`, then `about:debugging` | Built and linted; not yet run in Firefox |
+Pixel Veil is not on the Chrome Web Store yet. Download the Chrome zip from
+[the latest release](https://github.com/Ank-KhoaHo/pixel-overlay/releases/latest), unzip it, and load the
+folder with **Load unpacked** at `chrome://extensions`.
 
-From source takes about a minute:
-
-```bash
-git clone https://github.com/Ank-KhoaHo/pixel-overlay
-cd pixel-overlay
-npm ci
-npm run build
-```
-
-Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and pick
-`.output/chrome-mv3`. Pin Pixel Veil to the toolbar.
+Building from source, Edge and Firefox are in
+[Getting started](https://ank-khoaho.github.io/pixel-overlay/guide/getting-started).
 
 ## How to use it
 
@@ -60,26 +47,8 @@ Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpac
 4. Switch on **Keep on this site** to have the layers come back after a reload. Chrome asks once per site.
 5. Click the icon again to hide everything.
 
-More, when you need it:
-
-- **Export** saves this site's layers and images to one `.json` file; **Import** adds them on any site or computer.
-- **Side panel** moves the controls into Chrome's side panel. The page panel comes back when you close it.
-- **Group** names a layer's group (say `login` or `home`); the list above the layers then shows one group at a time.
-- **Fixed to window** pins a layer to the window, for sticky headers and footers.
-
-### Shortcuts
-
-| Keys | What they do |
-|---|---|
-| Alt+Shift+V | Show or hide Pixel Veil, like the icon |
-| Alt+Shift+H | Hide or show all layers |
-| Alt+Shift+. and Alt+Shift+, | Active layer 10 % more solid, or 10 % more see-through |
-| Arrow keys (Shift for 10 px) | Nudge the active layer |
-| F2 on a layer's name | Rename it |
-| (none set) | Turn Difference view on or off; pick your own keys |
-
-Change them in `chrome://extensions/shortcuts`. Every control also works from the keyboard and has a name
-a screen reader reads.
+Groups, pinned layers, the side panel, export and every shortcut are in
+[the guide](https://ank-khoaho.github.io/pixel-overlay/guide/).
 
 ## What it does
 
@@ -90,11 +59,6 @@ a screen reader reads.
   </picture>
 </p>
 
-Drop an image on the panel, line it up with drag, arrow keys, **Center** or **Fit width**, then switch to
-**Difference**. Keep desktop, tablet and mobile designs side by side, and group them per page. Pin a
-sticky header's design to the window. Move the controls into Chrome's side panel when they cover a
-narrow page.
-
 ## It asks for as little as it can
 
 <p align="center">
@@ -104,31 +68,22 @@ narrow page.
   </picture>
 </p>
 
-Your images and settings stay in your browser (`chrome.storage.local`). Pixel Veil sends nothing anywhere,
-has no account, and keeps its layers in a closed shadow root that the page cannot read. The full promise,
-and what does not count as breaking it, is in [SECURITY.md](SECURITY.md).
+Your images stay in your browser, and Pixel Veil sends nothing anywhere. The details are in
+[Privacy and permissions](https://ank-khoaho.github.io/pixel-overlay/guide/privacy).
 
 ## Status
 
-Version 0.2.2, before its first Store release. What has really been tried:
-
-| What | How it was tried |
-|---|---|
-| Chromium on Windows | 117 end-to-end tests drive the built extension |
-| Chromium on Linux | the same tests, on every push, in CI |
-| Edge | not tried; it is the same build |
-| Firefox 140+ | built, and passes Mozilla's own linter; not yet run in Firefox |
-| Chrome Web Store | listing in preparation |
+Version 0.2.2, before its first Store release. 117 end-to-end tests drive the built extension in
+Chromium, on Windows and in CI. Edge and Firefox are not tried yet:
+[what has really been tried](https://ank-khoaho.github.io/pixel-overlay/guide/reference#what-has-really-been-tried).
 
 ## Limits
 
 - Images: PNG, JPEG, WebP and GIF, up to 25 MB each. SVG is not accepted.
-- Layers are kept per site (scheme, host and port), not per page: `/login` and `/home` share one list.
-  Groups show one page's designs at a time.
-- Local files (`file://`) work after you turn on **Allow access to file URLs** in the extension's details;
-  Pixel Veil opens a page that shows how. Layers are kept per folder there, and **Keep on this site** is off.
-- A layer pinned to the window is always drawn above the layers that scroll with the page.
+- Layers are kept per site, not per page. Groups show one page's designs at a time.
 - Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
+
+Every limit is in [Limits and questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference).
 
 ## Alternatives
 
@@ -151,26 +106,22 @@ Yes. Every layer, no account, no paid plan waiting behind a button.
 Because that click is the permission. Pixel Veil starts with access to no site, and an extension that can
 read nothing until you ask has nothing to leak.
 
-**Will it slow my page down?**
-Ten 4000x8000 designs took 1.8 seconds to show and added no time per frame while dragging or scrolling.
-
-**Does it work on localhost?**
-Yes, like any other site. That is where most of the checking happens.
-
 **Why "veil"?**
 A veil is thin enough to see through. Lay it over the page, and the only things that stand out are the
 ones that should not.
+
+More answers are in [Limits and questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference#questions).
 
 ## Documentation
 
 | File | What it holds |
 |---|---|
+| [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/) | every control, step by step, with search; its pages are [guide/](guide/README.md) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | how to build and test it, and what gets rejected |
 | [SECURITY.md](SECURITY.md) | how to report a vulnerability, and what is not one |
 | [ROADMAP.md](ROADMAP.md) | direction, and the things deliberately not coming |
 | [CHANGELOG.md](CHANGELOG.md) | what changed in each version |
 | [PUBLIC.md](PUBLIC.md) | why some material is deliberately not published here |
-| [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/) | every control, step by step, with search; its pages are [guide/](guide/README.md) |
 | [site/](site/index.html) | the project page, served by GitHub Pages beside the guide |
 | [art/icon.svg](art/icon.svg) | the icon; `node scripts/make_icons.mjs` renders the PNGs in `public/icon/` |
 | [art/banner.png](art/banner.png) | the banner this README opens with |
