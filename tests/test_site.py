@@ -10,7 +10,7 @@ Nothing here opens a browser or the network. What is checked is what is in the f
 
 import json
 import re
-from datetime import date
+from datetime import date, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
 from xml.etree import ElementTree
@@ -179,7 +179,9 @@ def test_the_sitemap_lists_real_pages_of_this_site_with_real_dates():
         assert target.is_file(), f"sitemap.xml lists {address}, and site/ has no file for it"
         changed = (entry.findtext("s:lastmod", default="", namespaces=space) or "").strip()
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", changed), f"{address}: lastmod {changed!r} is not a date"
-        assert date.fromisoformat(changed) <= date.today(), f"{address}: lastmod {changed} is in the future"
+        # The date is written where the maintainer is, up to a day ahead of the UTC clock CI runs on.
+        latest = date.today() + timedelta(days=1)
+        assert date.fromisoformat(changed) <= latest, f"{address}: lastmod {changed} is in the future"
     assert _address() in listed, "sitemap.xml does not list the page itself"
     assert len(listed) == len(set(listed)), "sitemap.xml lists a page twice"
 

@@ -18,7 +18,7 @@ if (pages.length === 0) throw new Error('No page was read from the table in guid
 
 export default defineConfig({
   title: 'Pixel Veil',
-  titleTemplate: ':title | Pixel Veil guide',
+  titleTemplate: ':title | Pixel Veil',
   description: 'How to use Pixel Veil: lay a design image over a live page and check it pixel by pixel.',
   lang: 'en',
   base: '/pixel-overlay/guide/',
