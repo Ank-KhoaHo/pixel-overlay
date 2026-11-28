@@ -12,123 +12,80 @@
 
 ## What it is
 
-<p align="center">
-  <a href="https://ank-khoaho.github.io/pixel-overlay/"><img src="site/img/hero.webp" width="880" alt="A real product page with its design laid over it. Left of an orange line, the design at 50 % shows doubled text; right of it, Difference view turns matching pixels black, so only the heading, the paragraph and one button light up."></a>
-</p>
+A free, open-source Chrome extension for front-end developers. It lays a design export (a Figma frame as a
+PNG, a screenshot, any image) over the live page you built, so you can check the page against its design.
+It needs no account, and reads no site until you click its icon.
 
-<p align="center">
-  <strong>Unlimited layers &middot; no account &middot; no site access until you click</strong><br>
-  <sub>Left: the design at 50 % over the live page. Right: Difference view, where matching pixels turn black.
-  <a href="https://ank-khoaho.github.io/pixel-overlay/">Drag the line yourself</a> on the project page.</sub>
-</p>
-
-Pixel Veil is a free Chrome extension for front-end developers who build pages from a design export:
-a Figma frame as a PNG, a screenshot, anything that is an image. It costs nothing, needs no account,
-and reads no site until you click its icon.
-
-You know the moment. The page is done, the designer opens it next to the mockup, squints, and says the
-heading is "a little low". A little. Pixel Veil puts the mockup on top of your page, so you see
-"a little" in pixels, before anyone else does.
+A veil is thin enough to see through. Lay it over the page, and only what should not be there stands out.
 
 ## Get started
 
-Pixel Veil is not on the Chrome Web Store yet. Download the Chrome zip from
-[the latest release](https://github.com/Ank-KhoaHo/pixel-overlay/releases/latest), unzip it, and load the
-folder with **Load unpacked** at `chrome://extensions`.
-
-Building from source, Edge and Firefox are in
-[Getting started](https://ank-khoaho.github.io/pixel-overlay/guide/getting-started).
+**Download the Chrome zip from [the latest release](https://github.com/Ank-KhoaHo/pixel-overlay/releases/latest),**
+unzip it, and load the folder with **Load unpacked** at `chrome://extensions`. It is not on the Chrome Web
+Store yet. → [Getting started](https://ank-khoaho.github.io/pixel-overlay/guide/getting-started), from source
+and for Edge and Firefox too
 
 ## How to use it
 
-1. Open your page and click the **Pixel Veil** icon. A panel appears at the top right.
-2. Click **Add image**, drop image files on the panel, or paste one with Ctrl+V.
-3. Move the layer into place, set its see-through level, or switch to **Difference**.
-4. Switch on **Keep on this site** to have the layers come back after a reload. Chrome asks once per site.
-5. Click the icon again to hide everything.
+| You want to | Pixel Veil | Guide |
+|---|---|---|
+| Lay a design over a page | Click the icon, then **Add image**, drop a file, or paste one | [Compare a design](https://ank-khoaho.github.io/pixel-overlay/guide/compare) |
+| Line it up | Drag, arrow keys, **Center**, **Fit width**, snapping edges | [Compare a design](https://ank-khoaho.github.io/pixel-overlay/guide/compare#line-it-up) |
+| See what differs | See-through, **Difference**, Multiply, Screen, Invert | [Compare a design](https://ank-khoaho.github.io/pixel-overlay/guide/compare#compare-in-four-ways) |
+| Show one page's designs | Groups, and layers pinned to the window | [Organise your layers](https://ank-khoaho.github.io/pixel-overlay/guide/organise) |
+| Keep layers after a reload | **Keep on this site**; Chrome asks once per site | [Organise your layers](https://ank-khoaho.github.io/pixel-overlay/guide/organise#keep-on-this-site) |
+| Move them to another computer | Export and import one `.json` file | [Organise your layers](https://ank-khoaho.github.io/pixel-overlay/guide/organise#export-and-import) |
+| Work from the keyboard | Shortcuts for show, hide and opacity | [Keyboard](https://ank-khoaho.github.io/pixel-overlay/guide/keyboard) |
+| Know what it can read | Nothing at install; one tab when you click | [Privacy and permissions](https://ank-khoaho.github.io/pixel-overlay/guide/privacy) |
 
-Groups, pinned layers, the side panel, export and every shortcut are in
-[the guide](https://ank-khoaho.github.io/pixel-overlay/guide/).
-
-## What it does
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="site/img/features-dark.webp">
-    <img src="site/img/features-light.webp" width="880" alt="Eight features: any number of layers; four ways to compare; line it up fast; groups; pinned layers; side panel; export and import; keyboard first.">
-  </picture>
-</p>
-
-## It asks for as little as it can
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="site/img/privacy-dark.webp">
-    <img src="site/img/privacy-light.webp" width="760" alt="Site access, one step at a time. 1: you install it, and it can read no site at all. 2: you click its icon on a page, and it may draw on that one tab until you leave the page. 3: you tick Keep on this site, and Chrome asks you for that one site.">
-  </picture>
-</p>
-
-Your images stay in your browser, and Pixel Veil sends nothing anywhere. The details are in
-[Privacy and permissions](https://ank-khoaho.github.io/pixel-overlay/guide/privacy).
+**The whole guide, with pictures and search: [ank-khoaho.github.io/pixel-overlay](https://ank-khoaho.github.io/pixel-overlay/).**
 
 ## Status
 
-Version 0.2.2, before its first Store release. 117 end-to-end tests drive the built extension in
-Chromium, on Windows and in CI. Edge and Firefox are not tried yet:
-[what has really been tried](https://ank-khoaho.github.io/pixel-overlay/guide/reference#what-has-really-been-tried).
+Version 0.2.2, before its first Chrome Web Store release.
 
 ## Limits
 
 - Images: PNG, JPEG, WebP and GIF, up to 25 MB each. SVG is not accepted.
 - Layers are kept per site, not per page. Groups show one page's designs at a time.
-- Chrome does not let extensions draw on its own pages (`chrome://`, the Web Store).
+- Chrome lets no extension draw on its own pages (`chrome://`, the Web Store).
 
-Every limit is in [Limits and questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference).
+→ [All limits](https://ank-khoaho.github.io/pixel-overlay/guide/reference)
 
 ## Alternatives
 
-Pixel Veil is the right tool when you hold an image of the design and a page to check against it.
-Something else is better in these cases:
+Pixel Veil compares a picture of the design with a page. Something else is the better choice when:
 
-- **You measure spacing, not compare a picture.** Your design tool's own inspect or developer mode
-  gives exact sizes, and your browser's DevTools give the page's.
-- **You want a test to fail when a page changes.** A screenshot test, such as Playwright's
-  `toHaveScreenshot`, compares every build without a person looking.
-- **You need the overlay in a browser other than Chrome, Edge or Firefox.** Look for an overlay
-  extension in that browser's own store.
+- **You measure spacing, not compare a picture.** Your design tool's inspect mode gives exact sizes, and
+  DevTools give the page's.
+- **A test must fail when a page changes.** A screenshot test, such as Playwright's `toHaveScreenshot`,
+  checks every build with nobody looking.
+- **You work in a browser other than Chrome, Edge or Firefox.** Look in that browser's own store.
 
 ## FAQ
 
 **Is it really free?**
-Yes. Every layer, no account, no paid plan waiting behind a button.
+Yes. Every layer, no account, and no paid plan waiting behind a button.
 
 **Why does it need a click before it works on a page?**
-Because that click is the permission. Pixel Veil starts with access to no site, and an extension that can
-read nothing until you ask has nothing to leak.
+That click is the permission. Pixel Veil starts with access to no site, so it has nothing to leak.
 
-**Why "veil"?**
-A veil is thin enough to see through. Lay it over the page, and the only things that stand out are the
-ones that should not.
-
-More answers are in [Limits and questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference#questions).
+→ [More questions](https://ank-khoaho.github.io/pixel-overlay/guide/reference#questions)
 
 ## Documentation
 
 | File | What it holds |
 |---|---|
-| [The guide](https://ank-khoaho.github.io/pixel-overlay/guide/) | every control, step by step, with search; its pages are [guide/](guide/README.md) |
+| [Documentation site](https://ank-khoaho.github.io/pixel-overlay/) | how to use every feature, one page each, with search; its pages are [guide/](guide/README.md) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | how to build and test it, and what gets rejected |
 | [SECURITY.md](SECURITY.md) | how to report a vulnerability, and what is not one |
 | [ROADMAP.md](ROADMAP.md) | direction, and the things deliberately not coming |
 | [CHANGELOG.md](CHANGELOG.md) | what changed in each version |
 | [PUBLIC.md](PUBLIC.md) | why some material is deliberately not published here |
-| [site/](site/index.html) | the project page, served by GitHub Pages beside the guide |
-| [art/icon.svg](art/icon.svg) | the icon; `node scripts/make_icons.mjs` renders the PNGs in `public/icon/` |
-| [art/banner.png](art/banner.png) | the banner this README opens with |
-| [art/cover.png](art/cover.png) | the cover: the Chrome Web Store's small tile, 440&times;280 |
+| [LICENSE](LICENSE) | what you may do with this |
 
 The repository keeps its first working name, `pixel-overlay`.
 
 ## Licence
 
-[MIT](LICENSE). Use it, change it, ship it. Version 0.2.2, before its first Store release.
+Licensed under MIT; see [LICENSE](LICENSE).
