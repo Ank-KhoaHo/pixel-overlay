@@ -1,13 +1,16 @@
-"""Tests of site/: the project's page says one thing, in every place that says it.
+"""Tests of the Pages site: the home page says one thing, in every place that says it.
 
 A page tells search engines and link previews what it is in five places: its canonical link,
 its Open Graph tags, a JSON-LD block, `sitemap.xml` and `robots.txt`. Each is typed by hand,
 and each is read by a different machine, so they drift apart without anything looking wrong
 in a browser. These tests read them the way those machines do.
 
-Nothing here opens a browser or the network. What is checked is what is in the files.
+Nothing here opens a browser or the network. What is checked is what is in the files. The home
+page is guide/index.md, which VitePress builds into the site's index.html; what it puts in the
+page's head is written in its frontmatter, one JSON entry per line, and read from there.
 """
 
+import html
 import json
 import re
 from datetime import date, timedelta
@@ -61,10 +64,46 @@ class _Head(HTMLParser):
             self.json_ld[-1] += data
 
 
+HOME = ROOT / "guide" / "index.md"
+
+
+def _frontmatter() -> list[str]:
+    lines = HOME.read_text(encoding="utf-8").split("\n")
+    assert lines[0] == "---" and "---" in lines[1:], "guide/index.md does not open with a frontmatter block"
+    return lines[1:lines.index("---", 1)]
+
+
+def _home_html(front: list[str]) -> str:
+    """The head VitePress writes for the home page: the title from `title` and `titleTemplate`,
+    the description, and each entry of `head` as a tag."""
+    fields = {key: value.strip() for key, _, value in (line.partition(":") for line in front if line[:1].isalpha())}
+    parts = [f"<title>{fields.get('title', '')} | {fields.get('titleTemplate', '')}</title>",
+             f'<meta name="description" content="{html.escape(fields.get("description", ""))}">']
+    for line in front:
+        if line.startswith("  - ["):
+            tag, attrs, *inner = json.loads(line[4:])
+            text = "".join(f' {key}="{html.escape(value)}"' for key, value in attrs.items())
+            parts.append(f"<{tag}{text}>" + (f"{inner[0]}</{tag}>" if inner else ""))
+    return "\n".join(parts)
+
+
 def _page() -> _Head:
     head = _Head()
-    head.feed((SITE / "index.html").read_text(encoding="utf-8"))
+    head.feed(_home_html(_frontmatter()))
     return head
+
+
+def test_the_home_page_head_is_read_from_its_frontmatter():
+    head = _Head()
+    head.feed(_home_html([
+        "title: A", "titleTemplate: b c", "description: d",
+        '  - ["link", {"rel": "canonical", "href": "https://x/"}]',
+        '  - ["script", {"type": "application/ld+json"}, "{\\"a\\":1}"]',
+    ]))
+    assert head.title == "A | b c"
+    assert head.meta["description"] == ["d"]
+    assert head.canonical == ["https://x/"]
+    assert head.json_ld == ['{"a":1}']
 
 
 def _one(values: list[str], what: str) -> str:
@@ -83,12 +122,15 @@ def _address() -> str:
 
 
 def _file_for(address: str) -> Path | None:
-    """The file an address on this site is made from; None for another site. The guide's pages
-    are built from guide/*.md, and its front page from guide/README.md."""
+    """The file an address on this site is made from; None for another site. The home page is
+    built from guide/index.md, the guide's pages from guide/*.md, and its front page from
+    guide/README.md. Everything else is a static file of site/."""
     base = _address()
     if not address.startswith(base):
         return None
     rest = address[len(base):].split("#", 1)[0].split("?", 1)[0]
+    if rest in ("", "index.html"):
+        return HOME
     if rest.startswith("guide/"):
         return _guide_source(rest[len("guide/"):])
     return SITE / (rest if rest and not rest.endswith("/") else rest + "index.html")
@@ -206,7 +248,7 @@ def test_the_text_for_language_models_names_the_product_and_links_to_real_pages(
 GUIDE = ROOT / "guide"
 WORKFLOW = ROOT / ".github" / "workflows" / "pages.yml"
 # Pages of the guide that are not rows of its table: the table itself, and the changelog.
-NOT_IN_TABLE = {"README.md", "changelog.md"}
+NOT_IN_TABLE = {"README.md", "changelog.md", "index.md"}
 # The same shape the guide's config reads its sidebar with (guide/.vitepress/config.ts).
 _ROW_RE = re.compile(r"^\| \[([^\]]+)\]\(([\w-]+)\.md\) \|", re.MULTILINE)
 
@@ -218,6 +260,8 @@ def _guide_pages() -> list[Path]:
 
 
 def _guide_address(page: Path) -> str:
+    if page.name == "index.md":
+        return _address()
     return _address() + "guide/" + ("" if page.name == "README.md" else page.stem)
 
 
@@ -268,45 +312,11 @@ def test_the_changelog_page_starts_at_the_first_block_of_the_changelog():
     )
 
 
-class _Links(HTMLParser):
-    """Collects every address a page names (href and src)."""
-
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.addresses: list[str] = []
-
-    def handle_starttag(self, tag, attrs):
-        values = dict(attrs)
-        for key in ("href", "src", "srcset"):
-            if values.get(key):
-                self.addresses.append(values[key].split(" ", 1)[0])
-
-
-def _links(path: Path) -> _Links:
-    links = _Links()
-    links.feed(path.read_text(encoding="utf-8"))
-    return links
-
-
 def test_every_link_between_pages_of_the_site_reaches_a_file():
-    """The project page links into the guide, and the guide's pages link to each other and to the
-    project page's pictures. The guide's build finds a dead link between its own pages; it never
-    reads the project page, nor a link as GitHub follows it."""
+    """The pages link to each other and to the pictures in site/img/, as GitHub follows a link.
+    The build finds a dead link between its own pages; it never reads one the way GitHub does,
+    and a picture missing from site/ fails only when the page is built."""
     checked = 0
-    for page in sorted(SITE.rglob("*.html")):
-        for address in _links(page).addresses:
-            if address.startswith(("https:", "http:", "mailto:", "#", "data:")):
-                target = _file_for(address) if address.startswith("https:") else None
-            elif address.startswith("guide/"):
-                target = _guide_source(address.split("#", 1)[0][len("guide/"):])
-            else:
-                rest = address.split("#", 1)[0].split("?", 1)[0]
-                target = (page.parent / rest).resolve()
-                if address.endswith("/") or target.is_dir():
-                    target = target / "index.html"
-            if target is not None:
-                checked += 1
-                assert target.is_file(), f"{page.relative_to(SITE)} links to {address}, and there is no file for it"
     for page in _guide_pages():
         for address in _LINK_RE.findall(page.read_text(encoding="utf-8")):
             if address.startswith(("https:", "http:", "mailto:", "#")):
@@ -316,11 +326,42 @@ def test_every_link_between_pages_of_the_site_reaches_a_file():
             if target is not None:
                 checked += 1
                 assert target.is_file(), f"guide/{page.name} links to {address}, and there is no file for it"
-    assert checked > 20, f"only {checked} links were checked"
+    # 14 on 2026-11-28, when the hand-made project page, with its own links, went.
+    assert checked > 10, f"only {checked} links were checked"
 
 
-def test_the_project_page_and_the_readme_link_the_guide():
-    assert "guide/" in _links(SITE / "index.html").addresses, "the project page does not link the guide"
+def _home_links(front: list[str]) -> list[str]:
+    """The addresses the home page's buttons and features go to (`link:` in its frontmatter)."""
+    return [line.split("link:", 1)[1].strip() for line in front if line.strip().startswith(("link:", "- link:"))]
+
+
+def _slug(heading: str) -> str:
+    """The anchor VitePress gives a heading: lower case, words joined by hyphens."""
+    return re.sub(r"[^\w]+", "-", heading.strip().lower()).strip("-")
+
+
+def test_every_button_and_feature_of_the_home_page_goes_to_a_page():
+    """VitePress finds a dead link in a page's text, not in the hero's buttons or the features."""
+    links = _home_links(_frontmatter())
+    assert len(links) >= 8, f"only {len(links)} links were read from the home page: the check is vacuous"
+    for address in links:
+        if address.startswith("https:"):
+            target = _file_for(address)
+        else:
+            assert address.startswith("/"), f"the home page links {address!r}: a path from the site's root is needed"
+            target = _file_for(_address() + address[1:])
+        if target is None:
+            continue
+        assert target.is_file(), f"the home page links {address}, and there is no page for it"
+        anchor = address.partition("#")[2]
+        if anchor:
+            headings = [_slug(line[3:]) for line in target.read_text(encoding="utf-8").splitlines()
+                        if line.startswith("## ")]
+            assert anchor in headings, f"the home page links {address}, and that page has no heading #{anchor}"
+
+
+def test_the_home_page_and_the_readme_link_the_guide():
+    assert "/guide/" in _home_links(_frontmatter()), "the home page does not link the guide"
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert _address() + "guide/" in readme, "the README does not link the guide"
 
@@ -338,9 +379,11 @@ def test_every_readme_link_into_the_site_names_a_page_of_it():
 def test_the_pages_workflow_publishes_the_guide_the_build_writes():
     text = WORKFLOW.read_text(encoding="utf-8")
     assert "run: npm run docs:build" in text, "the Pages workflow does not build the guide"
-    assert "cp -R site/. _site/" in text and "cp -R guide/.vitepress/dist/. _site/guide/" in text, (
-        "the Pages workflow does not put the project page and the built guide together"
+    built, static = "cp -R guide/.vitepress/dist/. _site/", "cp -R site/. _site/"
+    assert built in text and static in text and text.index(built) < text.index(static), (
+        "the Pages workflow does not lay the built site down first, then the static files of site/"
     )
+    assert not (SITE / "index.html").exists(), "site/index.html would replace the built home page"
     assert re.search(r"^          path: _site$", text, re.M), "the Pages workflow publishes another folder"
     assert re.search(r'^    paths: \[.*"guide/\*\*".*\]$', text, re.M), "a change to the guide alone would not publish it"
     ignored = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()

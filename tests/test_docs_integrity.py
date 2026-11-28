@@ -267,9 +267,9 @@ def _deliberately_unpublished(rel: str) -> bool:
 # clone) the helper sets MIN_MD_FILES and MIN_LINKS_CI and leaves the other two.
 # A DROP below these means the walk broke, not that the repo shrank.
 MIN_MD_FILES = 12
-MIN_LINKS_LOCAL = 29
-MIN_LINKS_CI = 29
-MIN_ROWS = 37
+MIN_LINKS_LOCAL = 27
+MIN_LINKS_CI = 27
+MIN_ROWS = 38
 PUBLIC_MD_MAX_LINES = 35
 
 

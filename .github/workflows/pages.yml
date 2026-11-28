@@ -1,7 +1,8 @@
 name: pages
 
-# Publishes site/ (the project page, served as it is) to GitHub Pages, with the guide beside it at
-# guide/: VitePress builds that from guide/*.md (npm run docs:build).
+# Publishes the site to GitHub Pages: VitePress builds the home page and the guide from guide/*.md
+# (npm run docs:build), and the static files of site/ (robots.txt, sitemap.xml, llms.txt, pictures)
+# are laid over it.
 on:
   push:
     branches: [main]
@@ -31,14 +32,14 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
-      - name: Build the guide
+      - name: Build the site
         run: npm run docs:build
-      # The project page as it is, and the built guide in its guide/ folder.
+      # The built site, then the static files beside it. site/ has no index.html of its own.
       - name: Put the site together
         run: |
           mkdir _site
+          cp -R guide/.vitepress/dist/. _site/
           cp -R site/. _site/
-          cp -R guide/.vitepress/dist/. _site/guide/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
